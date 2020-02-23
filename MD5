@@ -1,6 +1,7 @@
-1652933d1da5668ea8445b29adb82b34 *DESCRIPTION
+0d3f6105eb3a9be71cf5f2884dcbb05e *DESCRIPTION
 0578b84ee28af684bb8cefb871d81d75 *LICENSE
 e2f360d574036d7567abb1d918aca648 *NAMESPACE
+dbf6e866275b621d2328346d637edf5f *NEWS.md
 1249d380f5086fea66746b7f2686bd47 *R/block.R
 25fca37fd58532eb96a7fea7c8e95b02 *R/conditions.R
 523e931337768a445d5824b833f640d9 *R/hop-common.R
@@ -31,7 +32,7 @@ ed8f8754f0395787b57771a6a0d9296b *README.md
 695024437cabeeac68b040415599d98f *build/vignette.rds
 0b0a8c20a65b98425afa2f4d959b339b *inst/doc/rowwise.R
 58b2891cb41f687ef7b76f620b9ecfbd *inst/doc/rowwise.Rmd
-ee335160db211ce902ec527390dc73c2 *inst/doc/rowwise.html
+505f65eedb2bfdc87a4a1b971900648f *inst/doc/rowwise.html
 33e0ff342ac1ad94ae9d4b65e85ed0c0 *inst/doc/slider.R
 fab542a9c4e082b041ab30381fd8d2d8 *inst/doc/slider.Rmd
 859def3dc21a1096a6d5e83611eea1a1 *inst/doc/slider.html
@@ -60,7 +61,7 @@ ebf7ffd3ae125ef342a1540f27d705b5 *src/index.h
 f3ab7df2f0709b29c315464989979d64 *src/slide-period.c
 38a592b07e31840c5e3f4351c619fd0d *src/slide.c
 4675e8bae7a55fb3442e262fe1440462 *src/slider-vctrs.c
-d2dd31eb814f24c7a6f0fcf6509cec21 *src/slider-vctrs.h
+d460e9d16ff184dd918688e7557da30f *src/slider-vctrs.h
 98b299af6dd4b9a5422e61c76b89af9d *src/slider.h
 dd1cd311c6ddd32b637da44dae431cab *src/utils.c
 be196d655752cb945095b48782a8bdf3 *src/utils.h
