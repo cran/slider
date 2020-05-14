@@ -6,19 +6,30 @@ test_that("size of each `.f` result must be 1", {
     slide_index_vec(1:2, 1:2, ~c(.x, 1)),
     "In iteration 1, the result of `.f` had size 2, not 1"
   )
+  expect_error(
+    slide_index_dbl(1:2, 1:2, ~c(.x, 1)),
+    "In iteration 1, the result of `.f` had size 2, not 1"
+  )
 })
 
 test_that("inner type is allowed to be different", {
   expect_equal(
-    slide_index_vec(1:2, 1:2, ~if (.x == 1L) {1} else {"hi"}, .ptype = list()),
+    slide_index_vec(1:2, 1:2, ~if (.x == 1L) {list(1)} else {list("hi")}, .ptype = list()),
     list(1, "hi")
   )
 })
 
 test_that("inner type can be restricted with list_of", {
   expect_error(
-    slide_index_vec(1:2, 1:2, ~if (.x == 1L) {1} else {"hi"}, .ptype = list_of(.ptype = double())),
-    class = "vctrs_error_cast_lossy"
+    slide_index_vec(1:2, 1:2, ~if (.x == 1L) {list_of(1)} else {list_of("hi")}, .ptype = list_of(.ptype = double())),
+    class = "vctrs_error_incompatible_type"
+  )
+})
+
+test_that("type of suffixed versions can be restricted", {
+  expect_error(
+    slide_index_dbl(1:2, 1:2, ~if (.x == 1L) {1} else {"hi"}),
+    class = "vctrs_error_incompatible_type"
   )
 })
 
@@ -28,7 +39,6 @@ test_that("inner type can be restricted with list_of", {
 test_that(".ptype is respected", {
   expect_equal(slide_index_vec(1, 1, ~.x), 1)
   expect_equal(slide_index_vec(1, 1, ~.x, .ptype = int()), 1L)
-  expect_equal(slide_index_vec(1, 1, ~.x, .ptype = new_date()), as.Date("1970-01-02"))
   expect_error(slide_index_vec(1, 1, ~.x + .5, .ptype = integer()), class = "vctrs_error_cast_lossy")
 })
 
@@ -53,8 +63,13 @@ test_that("`.ptype = NULL` validates that element lengths are 1", {
   )
 })
 
-test_that("`.ptype = NULL` returns `NULL` with size 0 `.x`", {
-  expect_equal(slide_index_vec(integer(), integer(), ~.x, .ptype = NULL), NULL)
+test_that("size 0 `.x` returns .ptype", {
+  expect_identical(slide_index_vec(integer(), integer(), ~.x, .ptype = NULL), NULL)
+  expect_identical(slide_index_vec(integer(), integer(), ~.x, .ptype = double()), double())
+})
+
+test_that("`.ptype = NULL` is size stable (#78)", {
+  expect_length(slide_index_vec(1:4, 1:4, ~1, .before = 1, .complete = TRUE), 4)
 })
 
 test_that(".ptypes with a vec_proxy() are restored to original type", {
@@ -70,6 +85,16 @@ test_that("can return a matrix and rowwise bind the results together", {
     slide_index_vec(1:5, 1:5, ~mat, .ptype = mat),
     rbind(mat, mat, mat, mat, mat)
   )
+})
+
+test_that("`slide_index_vec()` falls back to `c()` method as required", {
+  local_c_foobar()
+
+  expect_identical(slide_index_vec(1:3, 1:3, ~foobar(.x), .ptype = foobar()), foobar(1:3))
+  expect_condition(slide_index_vec(1:3, 1:3, ~foobar(.x), .ptype = foobar()), class = "slider_c_foobar")
+
+  expect_identical(slide_index_vec(1:3, 1:3, ~foobar(.x)), foobar(1:3))
+  expect_condition(slide_index_vec(1:3, 1:3, ~foobar(.x)), class = "slider_c_foobar")
 })
 
 # ------------------------------------------------------------------------------
@@ -95,8 +120,8 @@ test_that("slide_index_chr() works", {
   expect_equal(slide_index_chr("x", 1, ~.x), "x")
 })
 
-test_that("slide_index_chr() can coerce", {
-  expect_equal(slide_index_chr(1, 1, ~.x), "1")
+test_that("slide_index_chr() cannot coerce", {
+  expect_error(slide_index_chr(1, 1, ~.x), class = "vctrs_error_incompatible_type")
 })
 
 test_that("slide_index_lgl() works", {

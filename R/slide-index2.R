@@ -79,8 +79,9 @@ slide_index2 <- function(.x,
     .before = .before,
     .after = .after,
     .complete = .complete,
+    .ptype = list(),
     .constrain = FALSE,
-    .ptype = list()
+    .atomic = FALSE
   )
 }
 
@@ -95,22 +96,32 @@ slide_index2_vec <- function(.x,
                              .after = 0L,
                              .complete = FALSE,
                              .ptype = NULL) {
+  out <- slide_index2_impl(
+    .x,
+    .y,
+    .i,
+    .f,
+    ...,
+    .before = .before,
+    .after = .after,
+    .complete = .complete,
+    .ptype = list(),
+    .constrain = FALSE,
+    .atomic = TRUE
+  )
 
-  if (is.null(.ptype)) {
-    out <- slide_index2_vec_simplify(
-      .x,
-      .y,
-      .i,
-      .f,
-      ...,
-      .before = .before,
-      .after = .after,
-      .complete = .complete
-    )
+  vec_simplify(out, .ptype)
+}
 
-    return(out)
-  }
-
+slide_index2_vec_direct <- function(.x,
+                                    .y,
+                                    .i,
+                                    .f,
+                                    ...,
+                                    .before,
+                                    .after,
+                                    .complete,
+                                    .ptype) {
   slide_index2_impl(
     .x,
     .y,
@@ -121,32 +132,9 @@ slide_index2_vec <- function(.x,
     .after = .after,
     .complete = .complete,
     .ptype = .ptype,
-    .constrain = TRUE
+    .constrain = TRUE,
+    .atomic = TRUE
   )
-}
-
-slide_index2_vec_simplify <- function(.x,
-                                      .y,
-                                      .i,
-                                      .f,
-                                      ...,
-                                      .before,
-                                      .after,
-                                      .complete) {
-  out <- slide_index2(
-    .x,
-    .y,
-    .i,
-    .f,
-    ...,
-    .before = .before,
-    .after = .after,
-    .complete = .complete
-  )
-
-  check_all_size_one(out)
-
-  vec_simplify(out)
 }
 
 #' @rdname slide_index2
@@ -159,7 +147,7 @@ slide_index2_dbl <- function(.x,
                              .before = 0L,
                              .after = 0L,
                              .complete = FALSE) {
-  slide_index2_vec(
+  slide_index2_vec_direct(
     .x,
     .y,
     .i,
@@ -182,7 +170,7 @@ slide_index2_int <- function(.x,
                              .before = 0L,
                              .after = 0L,
                              .complete = FALSE) {
-  slide_index2_vec(
+  slide_index2_vec_direct(
     .x,
     .y,
     .i,
@@ -205,7 +193,7 @@ slide_index2_lgl <- function(.x,
                              .before = 0L,
                              .after = 0L,
                              .complete = FALSE) {
-  slide_index2_vec(
+  slide_index2_vec_direct(
     .x,
     .y,
     .i,
@@ -228,7 +216,7 @@ slide_index2_chr <- function(.x,
                              .before = 0L,
                              .after = 0L,
                              .complete = FALSE) {
-  slide_index2_vec(
+  slide_index2_vec_direct(
     .x,
     .y,
     .i,
@@ -252,7 +240,7 @@ slide_index2_dfr <- function(.x,
                              .before = 0L,
                              .after = 0L,
                              .complete = FALSE,
-                             .names_to = NULL,
+                             .names_to = rlang::zap(),
                              .name_repair = c("unique", "universal", "check_unique")) {
   out <- slide_index2(
     .x,
@@ -305,8 +293,9 @@ slide_index2_impl <- function(.x,
                               .before,
                               .after,
                               .complete,
+                              .ptype,
                               .constrain,
-                              .ptype) {
+                              .atomic) {
   vec_assert(.x)
   vec_assert(.y)
 
@@ -326,8 +315,9 @@ slide_index2_impl <- function(.x,
     before = .before,
     after = .after,
     complete = .complete,
-    constrain = .constrain,
     ptype = .ptype,
+    constrain = .constrain,
+    atomic = .atomic,
     env = environment(),
     type = type
   )

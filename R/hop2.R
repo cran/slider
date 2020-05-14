@@ -70,8 +70,9 @@ hop2 <- function(.x, .y, .starts, .stops, .f, ...) {
     .stops,
     .f,
     ...,
+    .ptype = list(),
     .constrain = FALSE,
-    .ptype = list()
+    .atomic = FALSE
   )
 }
 
@@ -84,55 +85,24 @@ hop2_vec <- function(.x,
                      .f,
                      ...,
                      .ptype = NULL) {
-
-  if (is.null(.ptype)) {
-    out <- hop2_vec_simplify(
-      .x,
-      .y,
-      .starts,
-      .stops,
-      .f,
-      ...
-    )
-
-    return(out)
-  }
-
-  hop2_impl(
+  out <- hop2_impl(
     .x,
     .y,
     .starts,
     .stops,
     .f,
     ...,
-    .constrain = TRUE,
-    .ptype = .ptype
-  )
-}
-
-hop2_vec_simplify <- function(.x,
-                              .y,
-                              .starts,
-                              .stops,
-                              .f,
-                              ...) {
-  out <- hop2(
-    .x,
-    .y,
-    .starts,
-    .stops,
-    .f,
-    ...
+    .ptype = list(),
+    .constrain = FALSE,
+    .atomic = TRUE
   )
 
-  check_all_size_one(out)
-
-  vec_simplify(out)
+  vec_simplify(out, .ptype)
 }
 
 # ------------------------------------------------------------------------------
 
-hop2_impl <- function(.x, .y, .starts, .stops, .f, ..., .constrain, .ptype) {
+hop2_impl <- function(.x, .y, .starts, .stops, .f, ..., .ptype, .constrain, .atomic) {
   vec_assert(.x)
   vec_assert(.y)
 
@@ -155,6 +125,7 @@ hop2_impl <- function(.x, .y, .starts, .stops, .f, ..., .constrain, .ptype) {
     ptype = .ptype,
     env = environment(),
     type = type,
-    constrain = .constrain
+    constrain = .constrain,
+    atomic = .atomic
   )
 }

@@ -119,8 +119,9 @@ slide_period <- function(.x,
     .before = .before,
     .after = .after,
     .complete = .complete,
+    .ptype = list(),
     .constrain = FALSE,
-    .ptype = list()
+    .atomic = FALSE
   )
 }
 
@@ -137,24 +138,36 @@ slide_period_vec <- function(.x,
                              .after = 0L,
                              .complete = FALSE,
                              .ptype = NULL) {
+  out <- slide_period_impl(
+    .x,
+    .i,
+    .period,
+    .f,
+    ...,
+    .every = .every,
+    .origin = .origin,
+    .before = .before,
+    .after = .after,
+    .complete = .complete,
+    .ptype = list(),
+    .constrain = FALSE,
+    .atomic = TRUE
+  )
 
-  if (is.null(.ptype)) {
-    out <- slide_period_simplify(
-      .x,
-      .i,
-      .period,
-      .f,
-      ...,
-      .every = .every,
-      .origin = .origin,
-      .before = .before,
-      .after = .after,
-      .complete = .complete
-    )
+  vec_simplify(out, .ptype)
+}
 
-    return(out)
-  }
-
+slide_period_vec_direct <- function(.x,
+                                    .i,
+                                    .period,
+                                    .f,
+                                    ...,
+                                    .every,
+                                    .origin,
+                                    .before,
+                                    .after,
+                                    .complete,
+                                    .ptype) {
   slide_period_impl(
     .x,
     .i,
@@ -166,37 +179,10 @@ slide_period_vec <- function(.x,
     .before = .before,
     .after = .after,
     .complete = .complete,
+    .ptype = .ptype,
     .constrain = TRUE,
-    .ptype = .ptype
+    .atomic = TRUE
   )
-}
-
-slide_period_simplify <- function(.x,
-                                  .i,
-                                  .period,
-                                  .f,
-                                  ...,
-                                  .every,
-                                  .origin,
-                                  .before,
-                                  .after,
-                                  .complete) {
-  out <- slide_period(
-    .x,
-    .i,
-    .period,
-    .f,
-    ...,
-    .every = .every,
-    .origin = .origin,
-    .before = .before,
-    .after = .after,
-    .complete = .complete
-  )
-
-  check_all_size_one(out)
-
-  vec_simplify(out)
 }
 
 #' @rdname slide_period
@@ -211,7 +197,7 @@ slide_period_dbl <- function(.x,
                              .before = 0L,
                              .after = 0L,
                              .complete = FALSE) {
-  slide_period_vec(
+  slide_period_vec_direct(
     .x,
     .i,
     .period,
@@ -238,7 +224,7 @@ slide_period_int <- function(.x,
                              .before = 0L,
                              .after = 0L,
                              .complete = FALSE) {
-  slide_period_vec(
+  slide_period_vec_direct(
     .x,
     .i,
     .period,
@@ -265,7 +251,7 @@ slide_period_lgl <- function(.x,
                              .before = 0L,
                              .after = 0L,
                              .complete = FALSE) {
-  slide_period_vec(
+  slide_period_vec_direct(
     .x,
     .i,
     .period,
@@ -292,7 +278,7 @@ slide_period_chr <- function(.x,
                              .before = 0L,
                              .after = 0L,
                              .complete = FALSE) {
-  slide_period_vec(
+  slide_period_vec_direct(
     .x,
     .i,
     .period,
@@ -319,7 +305,7 @@ slide_period_dfr <- function(.x,
                              .before = 0L,
                              .after = 0L,
                              .complete = FALSE,
-                             .names_to = NULL,
+                             .names_to = rlang::zap(),
                              .name_repair = c("unique", "universal", "check_unique")) {
   out <- slide_period(
     .x,
@@ -379,8 +365,9 @@ slide_period_impl <- function(.x,
                               .before,
                               .after,
                               .complete,
+                              .ptype,
                               .constrain,
-                              .ptype) {
+                              .atomic) {
   vec_assert(.x)
 
   .f <- as_function(.f)
@@ -399,8 +386,9 @@ slide_period_impl <- function(.x,
     before = .before,
     after = .after,
     complete = .complete,
-    constrain = .constrain,
     ptype = .ptype,
+    constrain = .constrain,
+    atomic = .atomic,
     env = environment(),
     type = type
   )

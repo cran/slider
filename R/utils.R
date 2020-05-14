@@ -21,23 +21,6 @@ is_unbounded <- function(x) {
   }
 }
 
-check_all_size_one <- function(out) {
-  if (vec_size(out) == 0L) {
-    return(invisible(out))
-  }
-
-  size <- vec_size_common(!!!out)
-
-  if (size != 1L) {
-    sizes <- vapply(out, vec_size, integer(1))
-    iteration <- which(sizes != 1L)[[1L]]
-    bad_size <- sizes[[iteration]]
-    stop_not_all_size_one(iteration, bad_size)
-  }
-
-  invisible(out)
-}
-
 check_is_list <- function(.l) {
   if (!is.list(.l)) {
     abort(paste0("`.l` must be a list, not ", vec_ptype_full(.l), "."))
@@ -93,20 +76,19 @@ compute_size <- function(x, type) {
   }
 }
 
-# Ensures that `slide_vec(c(x = 1), ~.x, .ptype = NULL)` works, and keeps it
-# in line with what `map_dbl(c(x = 1), ~c(y = 2))` does by only keeping names
-# from `x`
-vec_simplify <- function(x) {
+# Unconditionally use only the names from `.x` on the output when simplifying.
+# Ensures that the following are aligned:
+#
+# slide_vec(c(x = 1), ~c(y = 2))
+# purrr::map_dbl(c(x = 1), ~c(y = 2))
+#
+# slide_vec(1, ~c(y = 2))
+# purrr::map_dbl(1, ~c(y = 2))
+vec_simplify <- function(x, ptype) {
   names <- vec_names(x)
-
-  if (is.null(names)) {
-    out <- vec_c(!!!x)
-    return(out)
-  }
-
   x <- vec_set_names(x, NULL)
 
-  out <- vec_c(!!!x)
+  out <- vec_unchop(x, ptype = ptype)
 
   vec_set_names(out, names)
 }

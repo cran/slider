@@ -20,3 +20,38 @@ test_that("hop_index2_vec() errors if it can't simplify", {
     class = "vctrs_error_incompatible_type"
   )
 })
+
+# ------------------------------------------------------------------------------
+# .ptype
+
+test_that("`.ptype = NULL` validates that element lengths are 1", {
+  expect_error(
+    hop_index2_vec(1:2, 1:2, 1:2, 1:2, 1:2, ~if(.x == 1L) {1:2} else {1}, .ptype = NULL),
+    "In iteration 1, the result of `.f` had size 2, not 1."
+  )
+  expect_error(
+    hop_index2_vec(1:2, 1:2, 1:2, 1:2, 1:2, ~if(.x == 1L) {NULL} else {2}, .ptype = NULL),
+    "In iteration 1, the result of `.f` had size 0, not 1."
+  )
+})
+
+test_that("size 0 `.starts` / `.stops` returns size 0 `.ptype`", {
+  expect_identical(
+    hop_index2_vec(1:5, 1:5, 1:5, integer(), integer(), ~.x, .ptype = NULL),
+    NULL
+  )
+  expect_identical(
+    hop_index2_vec(1:5, 1:5, 1:5, integer(), integer(), ~.x, .ptype = double()),
+    double()
+  )
+})
+
+test_that("`hop_index2_vec()` falls back to `c()` method as required", {
+  local_c_foobar()
+
+  expect_identical(hop_index2_vec(1:3, 1:3, 1:3, 1:3, 1:3, ~foobar(.x), .ptype = foobar()), foobar(1:3))
+  expect_condition(hop_index2_vec(1:3, 1:3, 1:3, 1:3, 1:3, ~foobar(.x), .ptype = foobar()), class = "slider_c_foobar")
+
+  expect_identical(hop_index2_vec(1:3, 1:3, 1:3, 1:3, 1:3, ~foobar(.x)), foobar(1:3))
+  expect_condition(hop_index2_vec(1:3, 1:3, 1:3, 1:3, 1:3, ~foobar(.x)), class = "slider_c_foobar")
+})

@@ -103,7 +103,8 @@ hop <- function(.x,
     .f,
     ...,
     .ptype = list(),
-    .constrain = FALSE
+    .constrain = FALSE,
+    .atomic = FALSE
   )
 }
 
@@ -115,46 +116,18 @@ hop_vec <- function(.x,
                     .f,
                     ...,
                     .ptype = NULL) {
-
-  if (is.null(.ptype)) {
-    out <- hop_vec_simplify(
-      .x,
-      .starts,
-      .stops,
-      .f,
-      ...
-    )
-
-    return(out)
-  }
-
-  hop_impl(
+  out <- hop_impl(
     .x,
     .starts,
     .stops,
     .f,
     ...,
-    .ptype = .ptype,
-    .constrain = TRUE
-  )
-}
-
-hop_vec_simplify <- function(.x,
-                             .starts,
-                             .stops,
-                             .f,
-                             ...) {
-  out <- hop(
-    .x,
-    .starts,
-    .stops,
-    .f,
-    ...
+    .ptype = list(),
+    .constrain = FALSE,
+    .atomic = TRUE
   )
 
-  check_all_size_one(out)
-
-  vec_simplify(out)
+  vec_simplify(out, .ptype)
 }
 
 # ------------------------------------------------------------------------------
@@ -165,7 +138,8 @@ hop_impl <- function(.x,
                      .f,
                      ...,
                      .ptype,
-                     .constrain) {
+                     .constrain,
+                     .atomic) {
   vec_assert(.x)
 
   .f <- as_function(.f)
@@ -182,6 +156,7 @@ hop_impl <- function(.x,
     ptype = .ptype,
     env = environment(),
     type = type,
-    constrain = .constrain
+    constrain = .constrain,
+    atomic = .atomic
   )
 }

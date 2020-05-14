@@ -7,8 +7,9 @@ slide_period_common <- function(x,
                                 before,
                                 after,
                                 complete,
-                                constrain,
                                 ptype,
+                                constrain,
+                                atomic,
                                 env,
                                 type) {
   check_index_incompatible_type(i, ".i")
@@ -56,8 +57,9 @@ slide_period_common <- function(x,
     starts = starts,
     stops = stops,
     f_call = f_call,
-    constrain = constrain,
     ptype = ptype,
+    constrain = constrain,
+    atomic = atomic,
     env = env,
     type = type
   )
@@ -66,11 +68,14 @@ slide_period_common <- function(x,
     return(out)
   }
 
-  # Pad with ptype
-  init <- vec_init(ptype, n = 1L)
-
-  front <- vec_recycle(init, from - 1L)
-  back <- vec_recycle(init, n - to)
+  # Initialize with `NA`, not `NULL`, for size stability when auto-simplifying
+  if (atomic && !constrain) {
+    front <- vec_init_unspecified_list(n = from - 1L)
+    back <- vec_init_unspecified_list(n = n - to)
+  } else {
+    front <- vec_init(ptype, n = from - 1L)
+    back <- vec_init(ptype, n = n - to)
+  }
 
   out <- vec_c(front, out, back)
 
@@ -127,4 +132,8 @@ check_slide_period_complete <- function(x) {
   }
 
   x
+}
+
+vec_init_unspecified_list <- function(n) {
+  rep_len(list(NA), n)
 }

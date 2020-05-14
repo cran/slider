@@ -41,8 +41,8 @@ test_that("empty input returns a list, but after the index size check", {
   expect_error(hop_index(integer(), 1, integer(), integer(), ~.x), class = "slider_error_index_incompatible_size")
 })
 
-test_that("empty `.x` and `.i`, but size `n > 0` `.starts` and `.stops` returns size `n` empty ptype", {
-  expect_equal(hop_index(integer(), integer(), 1:2, 2:3, ~.x), list(NULL, NULL))
+test_that("empty `.x` and `.i`, but size `n > 0` `.starts` and `.stops` returns size `n` ptype", {
+  expect_equal(hop_index(integer(), integer(), 1:2, 2:3, ~.x), list(integer(), integer()))
 })
 
 test_that("empty `.x` and `.i`, but size `n > 0` `.starts` and `.stops`: sizes and types are checked first", {
@@ -265,4 +265,19 @@ test_that("can order by two vectors using a data frame", {
       vec_slice(i, 3:4)
     )
   )
+})
+
+# ------------------------------------------------------------------------------
+# input names
+
+test_that("names exist on inner sliced elements", {
+  names <- letters[1:5]
+  x <- set_names(1:5, names)
+  exp <- as.list(names)
+  expect_equal(hop_index(x, 1:5, 1:5, 1:5, ~names(.x)), exp)
+})
+
+test_that("names are never placed on the output", {
+  x <- set_names(1:5, letters[1:5])
+  expect_null(names(hop_index(x, 1:5, 1:5, 1:5, ~.x)))
 })

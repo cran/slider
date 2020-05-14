@@ -106,8 +106,45 @@
 #' # window. But on the 17th index position, `""2019-09-03"`, if we look
 #' # back 19 days we get to `""2019-08-15"`, which is the same value as
 #' # `i[1]` so a full window can be constructed.
-#' i[16] - 19 >= i[1] # FALSE
-#' i[17] - 19 >= i[1] # TRUE
+#' df$i[16] - 19 >= df$i[1] # FALSE
+#' df$i[17] - 19 >= df$i[1] # TRUE
+#'
+#' # ---------------------------------------------------------------------------
+#' # Accessing the current index value
+#'
+#' # A very simplistic version of `purrr::map2()`
+#' fake_map2 <- function(.x, .y, .f, ...) {
+#'   Map(.f, .x, .y, ...)
+#' }
+#'
+#' # Occasionally you need to access the index value that you are currently on.
+#' # This is generally not possible with a single call to `slide_index()`, but
+#' # can be easily accomplished by following up a `slide_index()` call with a
+#' # `purrr::map2()`. In this example, we want to use the distance from the
+#' # current index value (in days) as a multiplier on `x`. Values further
+#' # away from the current date get a higher multiplier.
+#' set.seed(123)
+#'
+#' # 25 random days past 2000-01-01
+#' i <- sort(as.Date("2000-01-01") + sample(100, 25))
+#'
+#' df <- data.frame(i = i, x = rnorm(25))
+#'
+#' weight_by_distance <- function(df, i) {
+#'   df$weight = abs(as.integer(df$i - i))
+#'   df$x_weighted = df$x * df$weight
+#'   df
+#' }
+#'
+#' # Use `slide_index()` to just generate the rolling data.
+#' # Here we take the current date + 5 days before + 5 days after.
+#' dfs <- slide_index(df, df$i, ~.x, .before = 5, .after = 5)
+#'
+#' # Follow up with a `map2()` with `i` as the second input.
+#' # This allows you to track the current `i` value and weight accordingly.
+#' result <- fake_map2(dfs, df$i, weight_by_distance)
+#'
+#' head(result)
 #'
 #' @seealso [slide()], [hop_index()], [slide_index2()]
 #' @export
@@ -126,8 +163,9 @@ slide_index <- function(.x,
     .before = .before,
     .after = .after,
     .complete = .complete,
+    .ptype = list(),
     .constrain = FALSE,
-    .ptype = list()
+    .atomic = FALSE
   )
 }
 
@@ -141,21 +179,30 @@ slide_index_vec <- function(.x,
                             .after = 0L,
                             .complete = FALSE,
                             .ptype = NULL) {
+  out <- slide_index_impl(
+    .x,
+    .i,
+    .f,
+    ...,
+    .before = .before,
+    .after = .after,
+    .complete = .complete,
+    .ptype = list(),
+    .constrain = FALSE,
+    .atomic = TRUE
+  )
 
-  if (is.null(.ptype)) {
-    out <- slide_index_simplify(
-      .x,
-      .i,
-      .f,
-      ...,
-      .before = .before,
-      .after = .after,
-      .complete = .complete
-    )
+  vec_simplify(out, .ptype)
+}
 
-    return(out)
-  }
-
+slide_index_vec_direct <- function(.x,
+                                   .i,
+                                   .f,
+                                   ...,
+                                   .before,
+                                   .after,
+                                   .complete,
+                                   .ptype) {
   slide_index_impl(
     .x,
     .i,
@@ -164,31 +211,10 @@ slide_index_vec <- function(.x,
     .before = .before,
     .after = .after,
     .complete = .complete,
+    .ptype = .ptype,
     .constrain = TRUE,
-    .ptype = .ptype
+    .atomic = TRUE
   )
-}
-
-slide_index_simplify <- function(.x,
-                                 .i,
-                                 .f,
-                                 ...,
-                                 .before,
-                                 .after,
-                                 .complete) {
-  out <- slide_index(
-    .x,
-    .i,
-    .f,
-    ...,
-    .before = .before,
-    .after = .after,
-    .complete = .complete
-  )
-
-  check_all_size_one(out)
-
-  vec_simplify(out)
 }
 
 #' @rdname slide_index
@@ -200,7 +226,7 @@ slide_index_dbl <- function(.x,
                             .before = 0L,
                             .after = 0L,
                             .complete = FALSE) {
-  slide_index_vec(
+  slide_index_vec_direct(
     .x,
     .i,
     .f,
@@ -221,7 +247,7 @@ slide_index_int <- function(.x,
                             .before = 0L,
                             .after = 0L,
                             .complete = FALSE) {
-  slide_index_vec(
+  slide_index_vec_direct(
     .x,
     .i,
     .f,
@@ -242,7 +268,7 @@ slide_index_lgl <- function(.x,
                             .before = 0L,
                             .after = 0L,
                             .complete = FALSE) {
-  slide_index_vec(
+  slide_index_vec_direct(
     .x,
     .i,
     .f,
@@ -263,7 +289,7 @@ slide_index_chr <- function(.x,
                             .before = 0L,
                             .after = 0L,
                             .complete = FALSE) {
-  slide_index_vec(
+  slide_index_vec_direct(
     .x,
     .i,
     .f,
@@ -285,7 +311,7 @@ slide_index_dfr <- function(.x,
                             .before = 0L,
                             .after = 0L,
                             .complete = FALSE,
-                            .names_to = NULL,
+                            .names_to = rlang::zap(),
                             .name_repair = c("unique", "universal", "check_unique")) {
   out <- slide_index(
     .x,
@@ -334,8 +360,9 @@ slide_index_impl <- function(.x,
                              .before,
                              .after,
                              .complete,
+                             .ptype,
                              .constrain,
-                             .ptype) {
+                             .atomic) {
   vec_assert(.x)
 
   .f <- as_function(.f)
@@ -351,8 +378,9 @@ slide_index_impl <- function(.x,
     before = .before,
     after = .after,
     complete = .complete,
-    constrain = .constrain,
     ptype = .ptype,
+    constrain = .constrain,
+    atomic = .atomic,
     env = environment(),
     type = type
   )

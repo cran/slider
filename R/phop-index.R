@@ -14,8 +14,9 @@ phop_index <- function(.l,
     .stops,
     .f,
     ...,
+    .ptype = list(),
     .constrain = FALSE,
-    .ptype = list()
+    .atomic = FALSE
   )
 }
 
@@ -28,50 +29,19 @@ phop_index_vec <- function(.l,
                            .f,
                            ...,
                            .ptype = NULL) {
-
-  if (is.null(.ptype)) {
-    out <- phop_index_simplify(
-      .l,
-      .i,
-      .starts,
-      .stops,
-      .f,
-      ...
-    )
-
-    return(out)
-  }
-
-  phop_index_impl(
+  out <- phop_index_impl(
     .l,
     .i,
     .starts,
     .stops,
     .f,
     ...,
-    .constrain = TRUE,
-    .ptype = .ptype
-  )
-}
-
-phop_index_simplify <- function(.l,
-                                .i,
-                                .starts,
-                                .stops,
-                                .f,
-                                ...) {
-  out <- phop_index(
-    .l,
-    .i,
-    .starts,
-    .stops,
-    .f,
-    ...
+    .ptype = list(),
+    .constrain = FALSE,
+    .atomic = TRUE
   )
 
-  check_all_size_one(out)
-
-  vec_simplify(out)
+  vec_simplify(out, .ptype)
 }
 
 # ------------------------------------------------------------------------------
@@ -82,8 +52,9 @@ phop_index_impl <- function(.l,
                             .stops,
                             .f,
                             ...,
+                            .ptype,
                             .constrain,
-                            .ptype) {
+                            .atomic) {
   check_is_list(.l)
 
   lapply(.l, vec_assert)
@@ -114,8 +85,9 @@ phop_index_impl <- function(.l,
     starts = .starts,
     stops = .stops,
     f_call = f_call,
-    constrain = .constrain,
     ptype = .ptype,
+    constrain = .constrain,
+    atomic = .atomic,
     env = environment(),
     type = type
   )

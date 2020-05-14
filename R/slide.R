@@ -207,7 +207,8 @@ slide <- function(.x,
     .step = .step,
     .complete = .complete,
     .ptype = list(),
-    .constrain = FALSE
+    .constrain = FALSE,
+    .atomic = FALSE
   )
 }
 
@@ -221,21 +222,30 @@ slide_vec <- function(.x,
                       .step = 1L,
                       .complete = FALSE,
                       .ptype = NULL) {
+  out <- slide_impl(
+    .x,
+    .f,
+    ...,
+    .before = .before,
+    .after = .after,
+    .step = .step,
+    .complete = .complete,
+    .ptype = list(),
+    .constrain = FALSE,
+    .atomic = TRUE
+  )
 
-  if (is.null(.ptype)) {
-    out <- slide_vec_simplify(
-      .x,
-      .f,
-      ...,
-      .before = .before,
-      .after = .after,
-      .step = .step,
-      .complete = .complete
-    )
+  vec_simplify(out, .ptype)
+}
 
-    return(out)
-  }
-
+slide_vec_direct <- function(.x,
+                             .f,
+                             ...,
+                             .before,
+                             .after,
+                             .step,
+                             .complete,
+                             .ptype) {
   slide_impl(
     .x,
     .f,
@@ -245,30 +255,9 @@ slide_vec <- function(.x,
     .step = .step,
     .complete = .complete,
     .ptype = .ptype,
-    .constrain = TRUE
+    .constrain = TRUE,
+    .atomic = TRUE
   )
-}
-
-slide_vec_simplify <- function(.x,
-                               .f,
-                               ...,
-                               .before,
-                               .after,
-                               .step,
-                               .complete) {
-  out <- slide(
-    .x,
-    .f,
-    ...,
-    .before = .before,
-    .after = .after,
-    .step = .step,
-    .complete = .complete
-  )
-
-  check_all_size_one(out)
-
-  vec_simplify(out)
 }
 
 #' @rdname slide
@@ -280,7 +269,7 @@ slide_dbl <- function(.x,
                       .after = 0L,
                       .step = 1L,
                       .complete = FALSE) {
-  slide_vec(
+  slide_vec_direct(
     .x,
     .f,
     ...,
@@ -301,7 +290,7 @@ slide_int <- function(.x,
                       .after = 0L,
                       .step = 1L,
                       .complete = FALSE) {
-  slide_vec(
+  slide_vec_direct(
     .x,
     .f,
     ...,
@@ -322,7 +311,7 @@ slide_lgl <- function(.x,
                       .after = 0L,
                       .step = 1L,
                       .complete = FALSE) {
-  slide_vec(
+  slide_vec_direct(
     .x,
     .f,
     ...,
@@ -343,7 +332,7 @@ slide_chr <- function(.x,
                       .after = 0L,
                       .step = 1L,
                       .complete = FALSE) {
-  slide_vec(
+  slide_vec_direct(
     .x,
     .f,
     ...,
@@ -365,7 +354,7 @@ slide_dfr <- function(.x,
                       .after = 0L,
                       .step = 1L,
                       .complete = FALSE,
-                      .names_to = NULL,
+                      .names_to = rlang::zap(),
                       .name_repair = c("unique", "universal", "check_unique")) {
   out <- slide(
     .x,
@@ -414,8 +403,9 @@ slide_impl <- function(.x,
                        .after,
                        .step,
                        .complete,
+                       .ptype,
                        .constrain,
-                       .ptype) {
+                       .atomic) {
   vec_assert(.x)
 
   .f <- as_function(.f)
@@ -427,6 +417,7 @@ slide_impl <- function(.x,
   params <- list(
     type = type,
     constrain = .constrain,
+    atomic = .atomic,
     before = .before,
     after = .after,
     step = .step,

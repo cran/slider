@@ -16,8 +16,9 @@ pslide_index <- function(.l,
     .before = .before,
     .after = .after,
     .complete = .complete,
+    .ptype = list(),
     .constrain = FALSE,
-    .ptype = list()
+    .atomic = FALSE
   )
 }
 
@@ -31,21 +32,30 @@ pslide_index_vec <- function(.l,
                              .after = 0L,
                              .complete = FALSE,
                              .ptype = NULL) {
+  out <- pslide_index_impl(
+    .l,
+    .i,
+    .f,
+    ...,
+    .before = .before,
+    .after = .after,
+    .complete = .complete,
+    .ptype = list(),
+    .constrain = FALSE,
+    .atomic = TRUE
+  )
 
-  if (is.null(.ptype)) {
-    out <- pslide_index_simplify(
-      .l,
-      .i,
-      .f,
-      ...,
-      .before = .before,
-      .after = .after,
-      .complete = .complete
-    )
+  vec_simplify(out, .ptype)
+}
 
-    return(out)
-  }
-
+pslide_index_vec_direct <- function(.l,
+                                    .i,
+                                    .f,
+                                    ...,
+                                    .before,
+                                    .after,
+                                    .complete,
+                                    .ptype) {
   pslide_index_impl(
     .l,
     .i,
@@ -54,31 +64,10 @@ pslide_index_vec <- function(.l,
     .before = .before,
     .after = .after,
     .complete = .complete,
+    .ptype = .ptype,
     .constrain = TRUE,
-    .ptype = .ptype
+    .atomic = TRUE
   )
-}
-
-pslide_index_simplify <- function(.l,
-                                  .i,
-                                  .f,
-                                  ...,
-                                  .before,
-                                  .after,
-                                  .complete) {
-  out <- pslide_index(
-    .l,
-    .i,
-    .f,
-    ...,
-    .before = .before,
-    .after = .after,
-    .complete = .complete
-  )
-
-  check_all_size_one(out)
-
-  vec_simplify(out)
 }
 
 #' @rdname slide_index2
@@ -90,7 +79,7 @@ pslide_index_dbl <- function(.l,
                              .before = 0L,
                              .after = 0L,
                              .complete = FALSE) {
-  pslide_index_vec(
+  pslide_index_vec_direct(
     .l,
     .i,
     .f,
@@ -111,7 +100,7 @@ pslide_index_int <- function(.l,
                              .before = 0L,
                              .after = 0L,
                              .complete = FALSE) {
-  pslide_index_vec(
+  pslide_index_vec_direct(
     .l,
     .i,
     .f,
@@ -132,7 +121,7 @@ pslide_index_lgl <- function(.l,
                              .before = 0L,
                              .after = 0L,
                              .complete = FALSE) {
-  pslide_index_vec(
+  pslide_index_vec_direct(
     .l,
     .i,
     .f,
@@ -153,7 +142,7 @@ pslide_index_chr <- function(.l,
                              .before = 0L,
                              .after = 0L,
                              .complete = FALSE) {
-  pslide_index_vec(
+  pslide_index_vec_direct(
     .l,
     .i,
     .f,
@@ -175,7 +164,7 @@ pslide_index_dfr <- function(.l,
                              .before = 0L,
                              .after = 0L,
                              .complete = FALSE,
-                             .names_to = NULL,
+                             .names_to = rlang::zap(),
                              .name_repair = c("unique", "universal", "check_unique")) {
   out <- pslide_index(
     .l,
@@ -224,8 +213,9 @@ pslide_index_impl <- function(.l,
                               .before,
                               .after,
                               .complete,
+                              .ptype,
                               .constrain,
-                              .ptype) {
+                              .atomic) {
   check_is_list(.l)
 
   lapply(.l, vec_assert)
@@ -257,8 +247,9 @@ pslide_index_impl <- function(.l,
     before = .before,
     after = .after,
     complete = .complete,
-    constrain = .constrain,
     ptype = .ptype,
+    constrain = .constrain,
+    atomic = .atomic,
     env = environment(),
     type = type
   )

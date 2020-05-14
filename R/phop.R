@@ -12,8 +12,9 @@ phop <- function(.l,
     .stops,
     .f,
     ...,
+    .ptype = list(),
     .constrain = FALSE,
-    .ptype = list()
+    .atomic = FALSE
   )
 }
 
@@ -25,46 +26,18 @@ phop_vec <- function(.l,
                      .f,
                      ...,
                      .ptype = NULL) {
-
-  if (is.null(.ptype)) {
-    out <- phop_simplify(
-      .l,
-      .starts,
-      .stops,
-      .f,
-      ...
-    )
-
-    return(out)
-  }
-
-  phop_impl(
+  out <- phop_impl(
     .l,
     .starts,
     .stops,
     .f,
     ...,
-    .constrain = TRUE,
-    .ptype = .ptype
-  )
-}
-
-phop_simplify <- function(.l,
-                          .starts,
-                          .stops,
-                          .f,
-                          ...) {
-  out <- phop(
-    .l,
-    .starts,
-    .stops,
-    .f,
-    ...
+    .ptype = list(),
+    .constrain = FALSE,
+    .atomic = TRUE
   )
 
-  check_all_size_one(out)
-
-  vec_simplify(out)
+  vec_simplify(out, .ptype)
 }
 
 # ------------------------------------------------------------------------------
@@ -74,8 +47,9 @@ phop_impl <- function(.l,
                       .stops,
                       .f,
                       ...,
+                      .ptype,
                       .constrain,
-                      .ptype) {
+                      .atomic) {
   check_is_list(.l)
 
   lapply(.l, vec_assert)
@@ -108,6 +82,7 @@ phop_impl <- function(.l,
     ptype = .ptype,
     env = environment(),
     type = type,
-    constrain = .constrain
+    constrain = .constrain,
+    atomic = .atomic
   )
 }

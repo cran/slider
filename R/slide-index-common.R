@@ -4,8 +4,9 @@ slide_index_common <- function(x,
                                before,
                                after,
                                complete,
-                               constrain,
                                ptype,
+                               constrain,
+                               atomic,
                                env,
                                type) {
   vec_assert(i)
@@ -19,12 +20,6 @@ slide_index_common <- function(x,
 
   check_index_cannot_be_na(i, ".i")
   check_index_must_be_ascending(i, ".i")
-
-  # Early exit if empty input
-  # (but after the index size check)
-  if (x_size == 0L) {
-    return(vec_init(ptype, 0L))
-  }
 
   check_before(before)
   check_after(after)
@@ -54,6 +49,7 @@ slide_index_common <- function(x,
     indices,
     type,
     constrain,
+    atomic,
     x_size,
     complete
   )
@@ -61,7 +57,7 @@ slide_index_common <- function(x,
 
 # ------------------------------------------------------------------------------
 
-compute_ranges <- function(i, before, after, start_unbounded, stop_unbounded) {
+compute_ranges <- function(i, before, after) {
   start_unbounded <- is_unbounded(before)
   stop_unbounded <- is_unbounded(after)
 

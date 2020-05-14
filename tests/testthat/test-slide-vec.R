@@ -8,17 +8,31 @@ test_that("size of each `.f` result must be 1", {
   )
 })
 
+test_that("size of each `.f` result must be 1", {
+  expect_error(
+    slide_dbl(1:2, ~c(.x, 1)),
+    "In iteration 1, the result of `.f` had size 2, not 1"
+  )
+})
+
 test_that("inner type is allowed to be different", {
   expect_equal(
-    slide_vec(1:2, ~if (.x == 1L) {1} else {"hi"}, .ptype = list()),
+    slide_vec(1:2, ~if (.x == 1L) {list(1)} else {list("hi")}, .ptype = list()),
     list(1, "hi")
   )
 })
 
 test_that("inner type can be restricted with list_of", {
   expect_error(
-    slide_vec(1:2, ~if (.x == 1L) {1} else {"hi"}, .ptype = list_of(.ptype = double())),
-    class = "vctrs_error_cast_lossy"
+    slide_vec(1:2, ~if (.x == 1L) {list_of(1)} else {list_of("hi")}, .ptype = list_of(.ptype = double())),
+    class = "vctrs_error_incompatible_type"
+  )
+})
+
+test_that("inner type can be restricted", {
+  expect_error(
+    slide_dbl(1:2, ~if (.x == 1L) {1} else {"x"}),
+    class = "vctrs_error_incompatible_type"
   )
 })
 
@@ -28,7 +42,6 @@ test_that("inner type can be restricted with list_of", {
 test_that(".ptype is respected", {
   expect_equal(slide_vec(1, ~.x), 1)
   expect_equal(slide_vec(1, ~.x, .ptype = int()), 1L)
-  expect_equal(slide_vec(1, ~.x, .ptype = new_date()), as.Date("1970-01-02"))
   expect_error(slide_vec(1, ~.x + .5, .ptype = integer()), class = "vctrs_error_cast_lossy")
 })
 
@@ -57,6 +70,11 @@ test_that("`.ptype = NULL` returns `NULL` with size 0 `.x`", {
   expect_equal(slide_vec(integer(), ~.x, .ptype = NULL), NULL)
 })
 
+test_that("`.ptype = NULL` is size stable (#78)", {
+  expect_length(slide_vec(1:4, ~.x, .step = 2), 4)
+  expect_length(slide_vec(1:4, ~1, .before = 1, .complete = TRUE), 4)
+})
+
 test_that(".ptypes with a vec_proxy() are restored to original type", {
   expect_is(
     slide_vec(Sys.Date() + 1:5, ~.x, .ptype = as.POSIXlt(Sys.Date())),
@@ -70,6 +88,16 @@ test_that("can return a matrix and rowwise bind the results together", {
     slide_vec(1:5, ~mat, .ptype = mat),
     rbind(mat, mat, mat, mat, mat)
   )
+})
+
+test_that("`slide_vec()` falls back to `c()` method as required", {
+  local_c_foobar()
+
+  expect_identical(slide_vec(1:3, ~foobar(.x), .ptype = foobar()), foobar(1:3))
+  expect_condition(slide_vec(1:3, ~foobar(.x), .ptype = foobar()), class = "slider_c_foobar")
+
+  expect_identical(slide_vec(1:3, ~foobar(.x)), foobar(1:3))
+  expect_condition(slide_vec(1:3, ~foobar(.x)), class = "slider_c_foobar")
 })
 
 # ------------------------------------------------------------------------------
@@ -88,22 +116,29 @@ test_that("names can be placed on atomics", {
   expect_equal(names(slide_vec(x, ~.x)), names)
   expect_equal(names(slide_vec(x, ~.x, .ptype = int())), names)
   expect_equal(names(slide_vec(x, ~.x, .ptype = dbl())), names)
+  expect_equal(names(slide_int(x, ~.x)), names)
+  expect_equal(names(slide_dbl(x, ~.x)), names)
 })
 
-test_that("when simplifying, names from `.x` are kept, and new names from `.f` results are dropped", {
+test_that("names from `.x` are kept, and new names from `.f` results are dropped", {
   x <- set_names(1, "x")
 
-  expect_identical(
-    slide_vec(x, ~c(y = 2), .ptype = NULL),
-    c(x = 2)
-  )
+  expect_identical(slide_vec(x, ~c(y = 2), .ptype = NULL), c(x = 2))
+  expect_identical(slide_vec(1, ~c(y = 2), .ptype = NULL), 2)
+
+  expect_identical(slide_dbl(x, ~c(y = 2)), c(x = 2))
+  expect_identical(slide_dbl(1, ~c(y = 2)), 2)
 })
 
-test_that("names are not placed on data frames rownames", {
+test_that("names can be placed on data frames", {
   names <- letters[1:2]
   x <- set_names(1:2, names)
+
+  out <- slide_vec(x, ~data.frame(x = .x))
+  expect_equal(rownames(out), names)
+
   out <- slide_vec(x, ~data.frame(x = .x), .ptype = data.frame(x = int()))
-  expect_equal(rownames(out), c("1", "2"))
+  expect_equal(rownames(out), names)
 })
 
 test_that("names can be placed on arrays", {
@@ -144,8 +179,8 @@ test_that("slide_chr() works", {
   expect_equal(slide_chr("x", ~.x), "x")
 })
 
-test_that("slide_chr() can coerce", {
-  expect_equal(slide_chr(1, ~.x), "1")
+test_that("slide_chr() cannot coerce", {
+  expect_error(slide_chr(1, ~.x), class = "vctrs_error_incompatible_type")
 })
 
 test_that("slide_lgl() works", {
