@@ -552,13 +552,14 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb16-2"><a href="#cb16-2"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">monthly =</span> <span class="kw">floor_date</span>(index, <span class="st">&quot;month&quot;</span>)) <span class="op">%&gt;%</span></span>
 <span id="cb16-3"><a href="#cb16-3"></a><span class="st">  </span><span class="kw">group_by</span>(monthly) <span class="op">%&gt;%</span></span>
 <span id="cb16-4"><a href="#cb16-4"></a><span class="st">  </span><span class="kw">summarise</span>(<span class="dt">sales =</span> <span class="kw">sum</span>(sales))</span>
-<span id="cb16-5"><a href="#cb16-5"></a><span class="co">#&gt; # A tibble: 4 x 2</span></span>
-<span id="cb16-6"><a href="#cb16-6"></a><span class="co">#&gt;   monthly    sales</span></span>
-<span id="cb16-7"><a href="#cb16-7"></a><span class="co">#&gt;   &lt;date&gt;     &lt;dbl&gt;</span></span>
-<span id="cb16-8"><a href="#cb16-8"></a><span class="co">#&gt; 1 2019-08-01     6</span></span>
-<span id="cb16-9"><a href="#cb16-9"></a><span class="co">#&gt; 2 2019-09-01    16</span></span>
-<span id="cb16-10"><a href="#cb16-10"></a><span class="co">#&gt; 3 2019-11-01    10</span></span>
-<span id="cb16-11"><a href="#cb16-11"></a><span class="co">#&gt; 4 2019-12-01    19</span></span></code></pre></div>
+<span id="cb16-5"><a href="#cb16-5"></a><span class="co">#&gt; `summarise()` ungrouping output (override with `.groups` argument)</span></span>
+<span id="cb16-6"><a href="#cb16-6"></a><span class="co">#&gt; # A tibble: 4 x 2</span></span>
+<span id="cb16-7"><a href="#cb16-7"></a><span class="co">#&gt;   monthly    sales</span></span>
+<span id="cb16-8"><a href="#cb16-8"></a><span class="co">#&gt; * &lt;date&gt;     &lt;dbl&gt;</span></span>
+<span id="cb16-9"><a href="#cb16-9"></a><span class="co">#&gt; 1 2019-08-01     6</span></span>
+<span id="cb16-10"><a href="#cb16-10"></a><span class="co">#&gt; 2 2019-09-01    16</span></span>
+<span id="cb16-11"><a href="#cb16-11"></a><span class="co">#&gt; 3 2019-11-01    10</span></span>
+<span id="cb16-12"><a href="#cb16-12"></a><span class="co">#&gt; 4 2019-12-01    19</span></span></code></pre></div>
 <p>But here is where things get interesting! Now what if we want to compute those monthly sales, but we want the time blocks to be made of the “current month block, plus 1 month block before it”. For example, for the month of <code>2019-09</code>, it would include <code>2019-08</code> and <code>2019-09</code> together in the rolling summary. There isn’t an easy way to do this in dplyr alone. With slider, there are two ways to do this.</p>
 <p>The first is with <code>slide_period_dfr()</code>, and it is as easy as adding <code>.before = 1</code>, to select the current month block and 1 before it.</p>
 <div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a><span class="kw">slide_period_dfr</span>(</span>

@@ -106,9 +106,20 @@ test_that("size 0 inputs returns .ptype", {
 test_that("`slide_index2_vec()` falls back to `c()` method as required", {
   local_c_foobar()
 
-  expect_identical(slide_index2_vec(1:3, 1:3, 1:3, ~foobar(.x), .ptype = foobar()), foobar(1:3))
-  expect_condition(slide_index2_vec(1:3, 1:3, 1:3, ~foobar(.x), .ptype = foobar()), class = "slider_c_foobar")
+  expect_identical(slide_index2_vec(1:3, 1:3, 1:3, ~foobar(.x), .ptype = foobar(integer())), foobar(1:3))
+  expect_condition(slide_index2_vec(1:3, 1:3, 1:3, ~foobar(.x), .ptype = foobar(integer())), class = "slider_c_foobar")
 
   expect_identical(slide_index2_vec(1:3, 1:3, 1:3, ~foobar(.x)), foobar(1:3))
   expect_condition(slide_index2_vec(1:3, 1:3, 1:3, ~foobar(.x)), class = "slider_c_foobar")
+})
+
+# ------------------------------------------------------------------------------
+# .complete
+
+test_that(".complete produces typed `NA` values", {
+  expect_identical(slide_index2_int(1:3, 1:3, 1:3, ~1L, .before = 1, .complete = TRUE), c(NA, 1L, 1L))
+  expect_identical(slide_index2_dbl(1:3, 1:3, 1:3, ~1, .before = 1, .complete = TRUE), c(NA, 1, 1))
+  expect_identical(slide_index2_chr(1:3, 1:3, 1:3, ~"1", .before = 1, .complete = TRUE), c(NA, "1", "1"))
+  expect_identical(slide_index2_vec(1:3, 1:3, 1:3, ~1, .before = 1, .complete = TRUE), c(NA, 1, 1))
+  expect_identical(slide_index2_vec(1:3, 1:3, 1:3, ~1, .before = 1, .complete = TRUE, .ptype = integer()), c(NA, 1L, 1L))
 })

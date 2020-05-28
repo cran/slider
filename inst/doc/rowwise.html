@@ -566,7 +566,9 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb11-8"><a href="#cb11-8"></a>      <span class="dt">.complete =</span> <span class="ot">TRUE</span></span>
 <span id="cb11-9"><a href="#cb11-9"></a>    )</span>
 <span id="cb11-10"><a href="#cb11-10"></a>  )</span>
-<span id="cb11-11"><a href="#cb11-11"></a><span class="co">#&gt; Error in model.frame.default(formula = sales ~ log_n_calls, data = .x, : variable lengths differ (found for &#39;log_n_calls&#39;)</span></span></code></pre></div>
+<span id="cb11-11"><a href="#cb11-11"></a><span class="co">#&gt; Error: Problem with `mutate()` input `regressions`.</span></span>
+<span id="cb11-12"><a href="#cb11-12"></a><span class="co">#&gt; x variable lengths differ (found for &#39;log_n_calls&#39;)</span></span>
+<span id="cb11-13"><a href="#cb11-13"></a><span class="co">#&gt; ℹ Input `regressions` is `slide(...)`.</span></span></code></pre></div>
 <p>To show this a bit simpler, let’s just try and access that <code>log_n_calls</code> column inside our slide function. We immediately get a slew of warnings because it doesn’t exist.</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a>company <span class="op">%&gt;%</span></span>
 <span id="cb12-2"><a href="#cb12-2"></a><span class="st">  </span><span class="kw">mutate</span>(</span>
@@ -619,7 +621,11 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb13-8"><a href="#cb13-8"></a>      <span class="dt">.complete =</span> <span class="ot">TRUE</span></span>
 <span id="cb13-9"><a href="#cb13-9"></a>    )</span>
 <span id="cb13-10"><a href="#cb13-10"></a>  )</span>
-<span id="cb13-11"><a href="#cb13-11"></a><span class="co">#&gt; Error: Column `regressions` must be length 5 (the group size) or one, not 10</span></span></code></pre></div>
+<span id="cb13-11"><a href="#cb13-11"></a><span class="co">#&gt; Error: Problem with `mutate()` input `regressions`.</span></span>
+<span id="cb13-12"><a href="#cb13-12"></a><span class="co">#&gt; x Input `regressions` can&#39;t be recycled to size 5.</span></span>
+<span id="cb13-13"><a href="#cb13-13"></a><span class="co">#&gt; ℹ Input `regressions` is `slide(.x = ., .f = ~lm(sales ~ n_calls, .x), .before = 2, .complete = TRUE)`.</span></span>
+<span id="cb13-14"><a href="#cb13-14"></a><span class="co">#&gt; ℹ Input `regressions` must be size 5 or 1, not 10.</span></span>
+<span id="cb13-15"><a href="#cb13-15"></a><span class="co">#&gt; ℹ The error occured in group 1: day = 1.</span></span></code></pre></div>
 </div>
 <div id="solution-sort-of" class="section level3">
 <h3>Solution (sort of)</h3>

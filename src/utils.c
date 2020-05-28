@@ -21,6 +21,39 @@ SEXP slider_ns_env = NULL;
 
 // -----------------------------------------------------------------------------
 
+#define SLIDER_INIT_ATOMIC(CTYPE, DEREF, NA_VALUE) do {        \
+  SEXP out = PROTECT(Rf_allocVector(type, size));              \
+  CTYPE* p_out = DEREF(out);                                   \
+                                                               \
+  for (R_xlen_t i = 0; i < size; ++i) {                        \
+    p_out[i] = NA_VALUE;                                       \
+  }                                                            \
+                                                               \
+  UNPROTECT(1);                                                \
+  return out;                                                  \
+} while (0)
+
+// Lists are initialized with `NULL` elements
+static SEXP list_init(R_xlen_t size) {
+  return Rf_allocVector(VECSXP, size);
+}
+
+SEXP slider_init(SEXPTYPE type, R_xlen_t size) {
+  switch (type) {
+  case LGLSXP:  SLIDER_INIT_ATOMIC(int, LOGICAL, NA_LOGICAL);
+  case INTSXP:  SLIDER_INIT_ATOMIC(int, INTEGER, NA_INTEGER);
+  case REALSXP: SLIDER_INIT_ATOMIC(double, REAL, NA_REAL);
+  case STRSXP:  SLIDER_INIT_ATOMIC(SEXP, STRING_PTR, NA_STRING);
+  case VECSXP:  return list_init(size);
+  default: Rf_errorcall(R_NilValue, "Internal error: Unknown type in `slider_init()`.");
+  }
+  never_reached("slider_init");
+}
+
+#undef SLIDER_INIT_ATOMIC
+
+// -----------------------------------------------------------------------------
+
 void stop_not_all_size_one(int iteration, int size) {
   SEXP call = PROTECT(
     Rf_lang3(
@@ -100,18 +133,14 @@ int compute_force(int type) {
 
 // -----------------------------------------------------------------------------
 
-SEXP copy_names(SEXP out, SEXP x, int type) {
-  SEXP names;
+SEXP slider_names(SEXP x, int type) {
   if (type == SLIDE) {
-    names = PROTECT(vec_names(x));
+    return vec_names(x);
   } else if (type == PSLIDE_EMPTY) {
-    names = PROTECT(R_NilValue);
+    return R_NilValue;
   } else {
-    names = PROTECT(vec_names(r_lst_get(x, 0)));
+    return vec_names(r_lst_get(x, 0));
   }
-
-  UNPROTECT(1);
-  return vec_set_names(out, names);
 }
 
 // -----------------------------------------------------------------------------
@@ -178,7 +207,7 @@ void slice_and_update_env(SEXP x, SEXP window, SEXP env, int type, SEXP containe
 // -----------------------------------------------------------------------------
 
 // [[register()]]
-void slider_init_utils(SEXP ns) {
+void slider_initialize_utils(SEXP ns) {
   slider_ns_env = ns;
 
   syms_dot_x = Rf_install(".x");

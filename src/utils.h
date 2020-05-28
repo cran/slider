@@ -15,6 +15,14 @@ static inline int max(int x, int y) {
   return x > y ? x : y;
 }
 
+static inline SEXP r_force_eval(SEXP call, SEXP env, const int n_force) {
+#if defined(R_VERSION) && R_VERSION >= R_Version(3, 2, 3)
+  return R_forceAndCall(call, n_force, env);
+#else
+  return Rf_eval(call, env);
+#endif
+}
+
 static inline SEXP r_lst_get(SEXP x, int i) {
   return VECTOR_ELT(x, i);
 }
@@ -29,6 +37,10 @@ static inline bool r_scalar_lgl_get(SEXP x) {
 
 static inline const char* r_scalar_chr_get(SEXP x) {
   return CHAR(STRING_ELT(x, 0));
+}
+
+__attribute__((noreturn)) static inline void never_reached(const char* fn) {
+  Rf_errorcall(R_NilValue, "Internal error: Reached the unreachable in `%s()`.", fn);
 }
 
 extern SEXP strings_dot_before;
@@ -47,6 +59,8 @@ extern SEXP slider_shared_na_lgl;
 
 extern SEXP slider_ns_env;
 
+SEXP slider_init(SEXPTYPE type, R_xlen_t size);
+
 void stop_not_all_size_one(int iteration, int size);
 
 void check_slide_starts_not_past_stops(SEXP starts, SEXP stops);
@@ -55,7 +69,7 @@ void check_hop_starts_not_past_stops(SEXP starts, SEXP stops);
 int compute_size(SEXP x, int type);
 int compute_force(int type);
 
-SEXP copy_names(SEXP out, SEXP x, int type);
+SEXP slider_names(SEXP x, int type);
 
 SEXP make_slice_container(int type);
 void slice_and_update_env(SEXP x, SEXP window, SEXP env, int type, SEXP container);

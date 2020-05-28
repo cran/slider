@@ -93,11 +93,33 @@ test_that("can return a matrix and rowwise bind the results together", {
 test_that("`slide_vec()` falls back to `c()` method as required", {
   local_c_foobar()
 
-  expect_identical(slide_vec(1:3, ~foobar(.x), .ptype = foobar()), foobar(1:3))
-  expect_condition(slide_vec(1:3, ~foobar(.x), .ptype = foobar()), class = "slider_c_foobar")
+  expect_identical(slide_vec(1:3, ~foobar(.x), .ptype = foobar(integer())), foobar(1:3))
+  expect_condition(slide_vec(1:3, ~foobar(.x), .ptype = foobar(integer())), class = "slider_c_foobar")
 
   expect_identical(slide_vec(1:3, ~foobar(.x)), foobar(1:3))
   expect_condition(slide_vec(1:3, ~foobar(.x)), class = "slider_c_foobar")
+})
+
+# ------------------------------------------------------------------------------
+# .step
+
+test_that(".step produces typed `NA` values", {
+  expect_identical(slide_int(1:3, identity, .step = 2), c(1L, NA, 3L))
+  expect_identical(slide_dbl(1:3, identity, .step = 2), c(1, NA, 3))
+  expect_identical(slide_chr(c("a", "b", "c"), identity, .step = 2), c("a", NA, "c"))
+  expect_identical(slide_vec(1:3, identity, .step = 2), c(1L, NA, 3L))
+  expect_identical(slide_vec(1:3, identity, .step = 2, .ptype = integer()), c(1L, NA, 3L))
+})
+
+# ------------------------------------------------------------------------------
+# .complete
+
+test_that(".complete produces typed `NA` values", {
+  expect_identical(slide_int(1:3, ~1L, .before = 1, .complete = TRUE), c(NA, 1L, 1L))
+  expect_identical(slide_dbl(1:3, ~1, .before = 1, .complete = TRUE), c(NA, 1, 1))
+  expect_identical(slide_chr(1:3, ~"1", .before = 1, .complete = TRUE), c(NA, "1", "1"))
+  expect_identical(slide_vec(1:3, ~1, .before = 1, .complete = TRUE), c(NA, 1, 1))
+  expect_identical(slide_vec(1:3, ~1, .before = 1, .complete = TRUE, .ptype = integer()), c(NA, 1L, 1L))
 })
 
 # ------------------------------------------------------------------------------
