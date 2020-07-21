@@ -27,6 +27,22 @@ document.addEventListener('DOMContentLoaded', function(e) {
   }
 });
 </script>
+<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
+// v0.0.1
+// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
+
+document.addEventListener('DOMContentLoaded', function() {
+  const codeList = document.getElementsByClassName("sourceCode");
+  for (var i = 0; i < codeList.length; i++) {
+    var linkList = codeList[i].getElementsByTagName('a');
+    for (var j = 0; j < linkList.length; j++) {
+      if (linkList[j].innerHTML === "") {
+        linkList[j].setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+});
+</script>
 
 
 <style type="text/css">code{white-space: pre;}</style>
@@ -555,7 +571,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb16-5"><a href="#cb16-5"></a><span class="co">#&gt; `summarise()` ungrouping output (override with `.groups` argument)</span></span>
 <span id="cb16-6"><a href="#cb16-6"></a><span class="co">#&gt; # A tibble: 4 x 2</span></span>
 <span id="cb16-7"><a href="#cb16-7"></a><span class="co">#&gt;   monthly    sales</span></span>
-<span id="cb16-8"><a href="#cb16-8"></a><span class="co">#&gt; * &lt;date&gt;     &lt;dbl&gt;</span></span>
+<span id="cb16-8"><a href="#cb16-8"></a><span class="co">#&gt;   &lt;date&gt;     &lt;dbl&gt;</span></span>
 <span id="cb16-9"><a href="#cb16-9"></a><span class="co">#&gt; 1 2019-08-01     6</span></span>
 <span id="cb16-10"><a href="#cb16-10"></a><span class="co">#&gt; 2 2019-09-01    16</span></span>
 <span id="cb16-11"><a href="#cb16-11"></a><span class="co">#&gt; 3 2019-11-01    10</span></span>
