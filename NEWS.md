@@ -1,3 +1,45 @@
+# slider 0.2.0
+
+* New family of very fast specialized sliding functions:
+
+  - `slide_sum()`, `slide_index_sum()`: for rolling sums
+  
+  - `slide_mean()`, `slide_index_mean()`: for rolling averages
+  
+  - `slide_prod()`, `slide_index_prod()`: for rolling products
+  
+  - `slide_min()`, `slide_index_min()`: for rolling minimums
+  
+  - `slide_max()`, `slide_index_max()`: for rolling maximums
+  
+  - `slide_any()`, `slide_index_any()`: for rolling any
+  
+  - `slide_all()`, `slide_index_all()`: for rolling all
+
+* The `slide_index_*()` family now allows `.before` and `.after` to be
+  functions of 1 argument (the index) that compute the boundaries of the
+  sliding window. This can be extremely useful when the default, which computes
+  `.i - .before` and `.i + .after`, is not applicable or correct for your needs.
+  One use case is to set `.before = ~.x %m-% months(1)` rather than
+  `.before = months(1)` to perform a 1 month rolling window in a way that won't
+  generate `NA` values on invalid dates (like 1 month before 2019-03-31) (#139).
+
+* The `slide_index_*()` family has undergone some internal changes to make it
+  more compatible with custom vctrs classes that could be provided as the
+  index (`.i`), such as the date-time classes in the clock package (#133, #130).
+  
+* For the `slide_index_*()` family, it is now required that `.i - .before` and
+  `.i + .after` be castable to `.i` by `vctrs::vec_cast()`. Similarly, for
+  the `hop_index_*()` family, `.starts` and `.stops` must both be castable to
+  `.i` (#132).
+
+* New vignette, `vignette("tsibble")`, explaining how to transition from tsibble
+  to slider (#128).
+
+* `vignette("rowwise")` has been updated to use `cur_data()` from dplyr 1.0.0,
+  which makes it significantly easier to do rolling operations on data frames
+  (like rolling regressions) using slider in a dplyr pipeline.
+
 # slider 0.1.5
 
 * `slide_period()` and friends have slightly better handling of size zero

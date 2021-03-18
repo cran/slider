@@ -9,7 +9,7 @@ slide_index_common <- function(x,
                                atomic,
                                env,
                                type) {
-  vec_assert(i)
+  info <- slide_index_info(i, before, after, ".i", ".before", ".after")
 
   x_size <- compute_size(x, type)
   i_size <- vec_size(i)
@@ -18,24 +18,12 @@ slide_index_common <- function(x,
     stop_index_incompatible_size(i_size, x_size, ".i")
   }
 
-  check_index_cannot_be_na(i, ".i")
-  check_index_must_be_ascending(i, ".i")
+  complete <- check_complete(complete, ".complete")
 
-  check_before(before)
-  check_after(after)
-  complete <- check_complete(complete)
-
-  # Compute unique values of `i` to avoid repeated evaluations of `.f`
-  split <- vec_group_loc(i)
-  i <- split$key
-
-  # `indices` helps us map back to `.x`
-  indices <- split$loc
-
-  range <- compute_ranges(i, before, after)
-  i <- range$i
-  starts <- range$starts
-  stops <- range$stops
+  i <- info$i
+  starts <- info$starts
+  stops <- info$stops
+  peer_sizes <- info$peer_sizes
 
   .Call(
     slide_index_common_impl,
@@ -46,7 +34,7 @@ slide_index_common <- function(x,
     f_call,
     ptype,
     env,
-    indices,
+    peer_sizes,
     type,
     constrain,
     atomic,
@@ -57,58 +45,109 @@ slide_index_common <- function(x,
 
 # ------------------------------------------------------------------------------
 
-compute_ranges <- function(i, before, after) {
-  start_unbounded <- is_unbounded(before)
-  stop_unbounded <- is_unbounded(after)
+slide_index_info <- function(i, before, after, i_arg, before_arg, after_arg) {
+  vec_assert(i, arg = i_arg)
+
+  check_index_cannot_be_na(i, i_arg)
+  check_index_must_be_ascending(i, i_arg)
+
+  # `i` is ascending, so we can detect uniques quickly with `vec_unrep()`.
+  # We must unrep before applying `before`/`after`, as we expect that they are
+  # only applied on the unique values of `i`.
+  # Otherwise, the same value of `i` could have different start/stop values,
+  # like `c(1, 1) - c(2, 3)`).
+  unrep <- vec_unrep(i)
+  i <- unrep$key
+
+  before <- check_before(before, before_arg)
+  after <- check_after(after, after_arg)
+
+  ranges <- compute_ranges(i, before, after, i_arg, before_arg, after_arg)
+
+  list(
+    i = ranges$i,
+    starts = ranges$starts,
+    stops = ranges$stops,
+    peer_sizes = unrep$times
+  )
+}
+
+compute_ranges <- function(i, before, after, i_arg, before_arg, after_arg) {
+  i_size <- vec_size(i)
+
+  start_unbounded <- before$unbounded
+  stop_unbounded <- after$unbounded
 
   # Setting to `NULL`, as that is what the C level new_range_info() expects
   # for unbounded start / stop ranges
   if (start_unbounded) {
     starts <- NULL
   } else {
-    starts <- i - before
-    check_generated_endpoints_cannot_be_na(starts, ".before")
+    starts <- before$fn(i)
+    starts <- vec_cast(starts, i, to_arg = ".i")
+    check_generated_endpoints_incompatible_size(starts, i_size, before_arg)
+    check_generated_endpoints_cannot_be_na(starts, before_arg)
+    check_generated_endpoints_must_be_ascending(starts, before_arg)
   }
 
   if (stop_unbounded) {
     stops <- NULL
   } else {
-    stops <- i + after
-    check_generated_endpoints_cannot_be_na(stops, ".after")
+    stops <- after$fn(i)
+    stops <- vec_cast(stops, i, to_arg = ".i")
+    check_generated_endpoints_incompatible_size(stops, i_size, after_arg)
+    check_generated_endpoints_cannot_be_na(stops, after_arg)
+    check_generated_endpoints_must_be_ascending(stops, after_arg)
   }
 
-  ptype <- vec_ptype_common(i, starts, stops)
-
+  ranks <- compute_combined_ranks(i = i, starts = starts, stops = stops)
+  i <- ranks$i
   if (!start_unbounded) {
-    starts <- vec_cast(starts, ptype)
-    starts <- vec_proxy_compare(starts)
+    starts <- ranks$starts
   }
-
   if (!stop_unbounded) {
-    stops <- vec_cast(stops, ptype)
-    stops <- vec_proxy_compare(stops)
+    stops <- ranks$stops
   }
-
-  i <- vec_cast(i, ptype)
-  i <- vec_proxy_compare(i)
 
   list(i = i, starts = starts, stops = stops)
 }
 
 # ------------------------------------------------------------------------------
 
-check_before <- function(before) {
-  vec_assert(before, size = 1L, arg = ".before")
-  invisible(before)
+check_before <- function(before, before_arg) {
+  if (is_function(before)) {
+    unbounded <- FALSE
+    fn <- before
+  } else if (is_formula(before)) {
+    unbounded <- FALSE
+    fn <- as_function(before)
+  } else {
+    vec_assert(before, size = 1L, arg = before_arg)
+    unbounded <- is_unbounded(before)
+    fn <- function(i) { i - before }
+  }
+
+  list(fn = fn, unbounded = unbounded)
 }
 
-check_after <- function(after) {
-  vec_assert(after, size = 1L, arg = ".after")
-  invisible(after)
+check_after <- function(after, after_arg) {
+  if (is_function(after)) {
+    unbounded <- FALSE
+    fn <- after
+  } else if (is_formula(after)) {
+    unbounded <- FALSE
+    fn <- as_function(after)
+  } else {
+    vec_assert(after, size = 1L, arg = after_arg)
+    unbounded <- is_unbounded(after)
+    fn <- function(i) { i + after }
+  }
+
+  list(fn = fn, unbounded = unbounded)
 }
 
-check_complete <- function(complete) {
-  complete <- vec_cast(complete, logical(), x_arg = ".complete")
-  vec_assert(complete, size = 1L, arg = ".complete")
+check_complete <- function(complete, complete_arg) {
+  complete <- vec_cast(complete, logical(), x_arg = complete_arg)
+  vec_assert(complete, size = 1L, arg = complete_arg)
   complete
 }

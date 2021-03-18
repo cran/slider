@@ -89,16 +89,14 @@ test_that("0 length .starts/.stops are allowed", {
   expect_equal(hop_index(1, 1, integer(), integer(), ~.x), list())
 })
 
-test_that("common type is found among .i/.starts/.stops", {
+test_that(".starts and .stops are cast to .i", {
   i <- new_date(c(0, 1))
-  start <- vec_cast(i[1], new_datetime(0))
-  stop <- i[2]
+  starts <- c("x", "y")
+  stops <- i
 
-  expect_equal(
-    hop_index(1:2, i, start, stop, ~.x),
-    list(
-      1:2
-    )
+  expect_error(
+    hop_index(1:2, i, starts, stops, ~.x),
+    class = "vctrs_error_incompatible_type"
   )
 })
 
@@ -221,7 +219,7 @@ test_that("can use `%m-%` and `add_with_rollback()` to solve month rollback issu
 })
 
 # ------------------------------------------------------------------------------
-# ordering by two vectors
+# data frame indices
 
 test_that("can order by two vectors using a data frame", {
   i <- data.frame(
@@ -264,6 +262,34 @@ test_that("can order by two vectors using a data frame", {
       # Return row 3 and 4
       vec_slice(i, 3:4)
     )
+  )
+})
+
+test_that("can use a data frame index where the first column breaks ties (#133)", {
+  i <- vec_c(
+    data.frame(year = 2019, month = c(4, 5, 5, 6, 7, 8)),
+    data.frame(year = 2020, month = 1:4)
+  )
+  starts <- data.frame(year = 2019, month = 5:6)
+  stops <- data.frame(year = 2020, month = 2:3)
+
+  expect_identical(
+    hop_index(i, i, starts, stops, identity),
+    list(
+      vec_slice(i, 2:8),
+      vec_slice(i, 4:9)
+    )
+  )
+})
+
+test_that("can select no rows when using a data frame index", {
+  i <- data.frame(year = 2020, month = 2)
+  starts <- data.frame(year = 2020, month = 3)
+  stops <- data.frame(year = 2020, month = 4)
+
+  expect_identical(
+    hop_index(i, i, starts, stops, identity),
+    list(vec_slice(i, NULL))
   )
 })
 

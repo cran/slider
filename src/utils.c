@@ -1,12 +1,17 @@
 #include "slider.h"
 #include "utils.h"
-#include "compare.h"
 #include "slider-vctrs.h"
 
+SEXP strings_before = NULL;
+SEXP strings_after = NULL;
+SEXP strings_step = NULL;
+SEXP strings_complete = NULL;
+SEXP strings_na_rm = NULL;
 SEXP strings_dot_before = NULL;
 SEXP strings_dot_after = NULL;
 SEXP strings_dot_step = NULL;
 SEXP strings_dot_complete = NULL;
+SEXP strings_dot_na_rm = NULL;
 
 SEXP syms_dot_x = NULL;
 SEXP syms_dot_y = NULL;
@@ -14,10 +19,32 @@ SEXP syms_dot_l = NULL;
 
 SEXP slider_shared_empty_lgl = NULL;
 SEXP slider_shared_empty_int = NULL;
+SEXP slider_shared_empty_dbl = NULL;
 
 SEXP slider_shared_na_lgl = NULL;
 
 SEXP slider_ns_env = NULL;
+
+// -----------------------------------------------------------------------------
+
+const void* r_const_deref(SEXP x, SEXPTYPE type) {
+  switch (type) {
+  case INTSXP: return INTEGER_RO(x);
+  case REALSXP: return REAL_RO(x);
+  case RAWSXP: return RAW_RO(x);
+  default: Rf_errorcall(R_NilValue, "Internal error in `r_const_deref()`: Can't deref `type`.");
+  }
+}
+
+void* r_deref(SEXP x, SEXPTYPE type) {
+  switch (type) {
+  case LGLSXP: return LOGICAL(x);
+  case INTSXP: return INTEGER(x);
+  case REALSXP: return REAL(x);
+  case RAWSXP: return RAW(x);
+  default: Rf_errorcall(R_NilValue, "Internal error in `r_deref()`: Can't deref `type`.");
+  }
+}
 
 // -----------------------------------------------------------------------------
 
@@ -95,14 +122,22 @@ static void stop_hop_start_past_stop(SEXP starts, SEXP stops) {
   Rf_error("Internal error: `stop_hop_start_past_stop()` should have jumped earlier");
 }
 
-void check_slide_starts_not_past_stops(SEXP starts, SEXP stops) {
-  if (vec_any_gt(starts, stops)) {
+void check_slide_starts_not_past_stops(SEXP starts,
+                                       SEXP stops,
+                                       const int* p_starts,
+                                       const int* p_stops,
+                                       R_xlen_t size) {
+  if (p_int_any_gt(p_starts, p_stops, size)) {
     stop_slide_start_past_stop(starts, stops);
   }
 }
 
-void check_hop_starts_not_past_stops(SEXP starts, SEXP stops) {
-  if (vec_any_gt(starts, stops)) {
+void check_hop_starts_not_past_stops(SEXP starts,
+                                     SEXP stops,
+                                     const int* p_starts,
+                                     const int* p_stops,
+                                     R_xlen_t size) {
+  if (p_int_any_gt(p_starts, p_stops, size)) {
     stop_hop_start_past_stop(starts, stops);
   }
 }
@@ -214,6 +249,26 @@ void slider_initialize_utils(SEXP ns) {
   syms_dot_y = Rf_install(".y");
   syms_dot_l = Rf_install(".l");
 
+  strings_before = Rf_allocVector(STRSXP, 1);
+  R_PreserveObject(strings_before);
+  SET_STRING_ELT(strings_before, 0, Rf_mkChar("before"));
+
+  strings_after = Rf_allocVector(STRSXP, 1);
+  R_PreserveObject(strings_after);
+  SET_STRING_ELT(strings_after, 0, Rf_mkChar("after"));
+
+  strings_step = Rf_allocVector(STRSXP, 1);
+  R_PreserveObject(strings_step);
+  SET_STRING_ELT(strings_step, 0, Rf_mkChar("step"));
+
+  strings_complete = Rf_allocVector(STRSXP, 1);
+  R_PreserveObject(strings_complete);
+  SET_STRING_ELT(strings_complete, 0, Rf_mkChar("complete"));
+
+  strings_na_rm = Rf_allocVector(STRSXP, 1);
+  R_PreserveObject(strings_na_rm);
+  SET_STRING_ELT(strings_na_rm, 0, Rf_mkChar("na_rm"));
+
   strings_dot_before = Rf_allocVector(STRSXP, 1);
   R_PreserveObject(strings_dot_before);
   SET_STRING_ELT(strings_dot_before, 0, Rf_mkChar(".before"));
@@ -230,6 +285,10 @@ void slider_initialize_utils(SEXP ns) {
   R_PreserveObject(strings_dot_complete);
   SET_STRING_ELT(strings_dot_complete, 0, Rf_mkChar(".complete"));
 
+  strings_dot_na_rm = Rf_allocVector(STRSXP, 1);
+  R_PreserveObject(strings_dot_na_rm);
+  SET_STRING_ELT(strings_dot_na_rm, 0, Rf_mkChar(".na_rm"));
+
   slider_shared_empty_lgl = Rf_allocVector(LGLSXP, 0);
   R_PreserveObject(slider_shared_empty_lgl);
   MARK_NOT_MUTABLE(slider_shared_empty_lgl);
@@ -237,6 +296,10 @@ void slider_initialize_utils(SEXP ns) {
   slider_shared_empty_int = Rf_allocVector(INTSXP, 0);
   R_PreserveObject(slider_shared_empty_int);
   MARK_NOT_MUTABLE(slider_shared_empty_int);
+
+  slider_shared_empty_dbl = Rf_allocVector(REALSXP, 0);
+  R_PreserveObject(slider_shared_empty_dbl);
+  MARK_NOT_MUTABLE(slider_shared_empty_dbl);
 
   slider_shared_na_lgl = Rf_allocVector(LGLSXP, 1);
   R_PreserveObject(slider_shared_na_lgl);

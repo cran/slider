@@ -46,6 +46,11 @@ set.seed(123)
 slide(parameters, ~runif(.x$n, .x$min, .x$max))
 
 ## -----------------------------------------------------------------------------
+parameters %>%
+  rowwise() %>%
+  mutate(random = list(runif(n, min, max)))
+
+## -----------------------------------------------------------------------------
 company <- tibble(
   day = rep(c(1, 2), each = 5),
   sales = sample(100, 10),
@@ -66,51 +71,8 @@ company %>%
 company %>%
   mutate(
     regressions = slide(
-      .x = ., 
+      .x = cur_data(),
       .f = ~lm(sales ~ n_calls, .x), 
-      .before = 2, 
-      .complete = TRUE
-    )
-  )
-
-## ---- error=TRUE--------------------------------------------------------------
-company %>%
-  mutate(
-    log_n_calls = log(n_calls),
-    regressions = slide(
-      .x = ., 
-      .f = ~lm(sales ~ log_n_calls, .x), 
-      .before = 2, 
-      .complete = TRUE
-    )
-  )
-
-## ---- error=TRUE--------------------------------------------------------------
-company %>%
-  mutate(
-    log_n_calls = log(n_calls),
-    example = slide(., ~.x$log_n_calls)
-  )
-
-## ---- error=TRUE--------------------------------------------------------------
-company %>%
-  group_by(day) %>%
-  mutate(
-    regressions = slide(
-      .x = ., 
-      .f = ~lm(sales ~ n_calls, .x), 
-      .before = 2, 
-      .complete = TRUE
-    )
-  )
-
-## -----------------------------------------------------------------------------
-company %>%
-  mutate(
-    log_n_calls = log(n_calls),
-    regressions = slide(
-      .x = tibble(sales = sales, log_n_calls = log_n_calls), 
-      .f = ~lm(sales ~ log_n_calls, .x), 
       .before = 2, 
       .complete = TRUE
     )
@@ -121,31 +83,22 @@ company %>%
   group_by(day) %>%
   mutate(
     regressions = slide(
-      .x = tibble(sales = sales, n_calls = n_calls), 
+      .x = cur_data(),
       .f = ~lm(sales ~ n_calls, .x), 
       .before = 2, 
       .complete = TRUE
     )
   )
 
-## -----------------------------------------------------------------------------
-single_group_regressions <- function(.data_group, ...) {
-  regressions <- slide(
-      .x = .data_group, 
-      .f = ~lm(sales ~ n_calls, .x), 
+## ---- error=TRUE--------------------------------------------------------------
+company %>%
+  mutate(
+    log_sales = log10(sales),
+    regressions = slide(
+      .x = .,
+      .f = ~lm(log_sales ~ n_calls, .x), 
       .before = 2, 
       .complete = TRUE
     )
-  
-  mutate(.data_group, regressions = regressions)
-}
-
-## -----------------------------------------------------------------------------
-day_one <- filter(company, day == 1)
-single_group_regressions(day_one)
-
-## -----------------------------------------------------------------------------
-company %>%
-  group_by(day) %>%
-  group_modify(single_group_regressions)
+  )
 
