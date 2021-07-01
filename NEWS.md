@@ -1,3 +1,8 @@
+# slider 0.2.2
+
+* Updated internal usage of `vec_order()` to prepare for a breaking change
+  in vctrs (#153).
+
 # slider 0.2.1
 
 * Fixed a C alignment issue detected by CRAN's USBAN machine related to
