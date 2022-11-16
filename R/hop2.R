@@ -102,16 +102,22 @@ hop2_vec <- function(.x,
 
 # ------------------------------------------------------------------------------
 
-hop2_impl <- function(.x, .y, .starts, .stops, .f, ..., .ptype, .constrain, .atomic) {
-  vec_assert(.x)
-  vec_assert(.y)
+hop2_impl <- function(.x,
+                      .y,
+                      .starts,
+                      .stops,
+                      .f,
+                      ...,
+                      .ptype,
+                      .constrain,
+                      .atomic,
+                      .slider_error_call = caller_env()) {
+  vec_assert(.x, call = .slider_error_call)
+  vec_assert(.y, call = .slider_error_call)
 
-  # TODO - Do more efficiently internally by reusing rather than recycling
-  # https://github.com/tidyverse/purrr/blob/e4d553989e3d18692ebeeedb334b6223ae9ea294/src/map.c#L129
-  # But use `vec_size_common()` to check sizes and get `.size`
-  args <- vec_recycle_common(.x, .y)
+  args <- vec_recycle_common(.x = .x, .y = .y, .call = .slider_error_call)
 
-  .f <- as_function(.f)
+  .f <- as_function(.f, call = .slider_error_call)
 
   f_call <- expr(.f(.x, .y, ...))
 
@@ -126,6 +132,7 @@ hop2_impl <- function(.x, .y, .starts, .stops, .f, ..., .ptype, .constrain, .ato
     env = environment(),
     type = type,
     constrain = .constrain,
-    atomic = .atomic
+    atomic = .atomic,
+    slider_error_call = .slider_error_call
   )
 }

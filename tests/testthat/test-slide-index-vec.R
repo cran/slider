@@ -2,14 +2,8 @@
 # type / size strict-ness
 
 test_that("size of each `.f` result must be 1", {
-  expect_error(
-    slide_index_vec(1:2, 1:2, ~c(.x, 1)),
-    "In iteration 1, the result of `.f` had size 2, not 1"
-  )
-  expect_error(
-    slide_index_dbl(1:2, 1:2, ~c(.x, 1)),
-    "In iteration 1, the result of `.f` had size 2, not 1"
-  )
+  expect_snapshot(error = TRUE, slide_index_vec(1:2, 1:2, ~c(.x, 1)))
+  expect_snapshot(error = TRUE, slide_index_dbl(1:2, 1:2, ~c(.x, 1)))
 })
 
 test_that("inner type is allowed to be different", {
@@ -20,17 +14,21 @@ test_that("inner type is allowed to be different", {
 })
 
 test_that("inner type can be restricted with list_of", {
-  expect_error(
-    slide_index_vec(1:2, 1:2, ~if (.x == 1L) {list_of(1)} else {list_of("hi")}, .ptype = list_of(.ptype = double())),
-    class = "vctrs_error_incompatible_type"
-  )
+  expect_snapshot({
+    (expect_error(
+      slide_index_vec(1:2, 1:2, ~if (.x == 1L) {list_of(1)} else {list_of("hi")}, .ptype = list_of(.ptype = double())),
+      class = "vctrs_error_incompatible_type"
+    ))
+  })
 })
 
 test_that("type of suffixed versions can be restricted", {
-  expect_error(
-    slide_index_dbl(1:2, 1:2, ~if (.x == 1L) {1} else {"hi"}),
-    class = "vctrs_error_incompatible_type"
-  )
+  expect_snapshot({
+    (expect_error(
+      slide_index_dbl(1:2, 1:2, ~if (.x == 1L) {1} else {"hi"}),
+      class = "vctrs_error_incompatible_type"
+    ))
+  })
 })
 
 # ------------------------------------------------------------------------------
@@ -39,7 +37,9 @@ test_that("type of suffixed versions can be restricted", {
 test_that(".ptype is respected", {
   expect_equal(slide_index_vec(1, 1, ~.x), 1)
   expect_equal(slide_index_vec(1, 1, ~.x, .ptype = int()), 1L)
-  expect_error(slide_index_vec(1, 1, ~.x + .5, .ptype = integer()), class = "vctrs_error_cast_lossy")
+  expect_snapshot({
+    (expect_error(slide_index_vec(1, 1, ~.x + .5, .ptype = integer()), class = "vctrs_error_cast_lossy"))
+  })
 })
 
 test_that("`.ptype = NULL` results in 'guessed' .ptype", {
@@ -50,17 +50,18 @@ test_that("`.ptype = NULL` results in 'guessed' .ptype", {
 })
 
 test_that("`.ptype = NULL` fails if no common type is found", {
-  expect_error(
-    slide_index_vec(1:2, 1:2, ~ifelse(.x == 1L, "hello", 1), .ptype = NULL),
-    class = "vctrs_error_incompatible_type"
-  )
+  expect_snapshot({
+    (expect_error(
+      slide_index_vec(1:2, 1:2, ~ifelse(.x == 1L, "hello", 1), .ptype = NULL),
+      class = "vctrs_error_incompatible_type"
+    ))
+  })
 })
 
 test_that("`.ptype = NULL` validates that element lengths are 1", {
-  expect_error(
-    slide_index_vec(1:2, 1:2, ~if(.x == 1L) {1:2} else {1}, .ptype = NULL),
-    "In iteration 1, the result of `.f` had size 2, not 1."
-  )
+  expect_snapshot(error = TRUE, {
+    slide_index_vec(1:2, 1:2, ~if(.x == 1L) {1:2} else {1}, .ptype = NULL)
+  })
 })
 
 test_that("size 0 `.x` returns .ptype", {
@@ -132,7 +133,9 @@ test_that("slide_index_chr() works", {
 })
 
 test_that("slide_index_chr() cannot coerce", {
-  expect_error(slide_index_chr(1, 1, ~.x), class = "vctrs_error_incompatible_type")
+  expect_snapshot({
+    (expect_error(slide_index_chr(1, 1, ~.x), class = "vctrs_error_incompatible_type"))
+  })
 })
 
 test_that("slide_index_lgl() works", {

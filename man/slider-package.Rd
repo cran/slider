@@ -6,16 +6,14 @@
 \alias{_PACKAGE}
 \title{slider: Sliding Window Functions}
 \description{
-Provides type-stable rolling window functions over any R data
-    type. Cumulative and expanding windows are also supported. For more
-    advanced usage, an index can be used as a secondary vector that
-    defines how sliding windows are to be created.
+Provides type-stable rolling window functions over any R data type. Cumulative and expanding windows are also supported. For more advanced usage, an index can be used as a secondary vector that defines how sliding windows are to be created.
 }
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/DavisVaughan/slider}
-  \item Report bugs at \url{https://github.com/DavisVaughan/slider/issues}
+  \item \url{https://github.com/r-lib/slider}
+  \item \url{https://slider.r-lib.org}
+  \item Report bugs at \url{https://github.com/r-lib/slider/issues}
 }
 
 }
@@ -24,7 +22,7 @@ Useful links:
 
 Other contributors:
 \itemize{
-  \item RStudio [copyright holder]
+  \item RStudio [copyright holder, funder]
 }
 
 }

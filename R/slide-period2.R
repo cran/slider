@@ -143,7 +143,8 @@ slide_period2_vec_direct <- function(.x,
                                      .before,
                                      .after,
                                      .complete,
-                                     .ptype) {
+                                     .ptype,
+                                     .slider_error_call = caller_env()) {
   slide_period2_impl(
     .x,
     .y,
@@ -158,7 +159,8 @@ slide_period2_vec_direct <- function(.x,
     .complete = .complete,
     .ptype = .ptype,
     .constrain = TRUE,
-    .atomic = TRUE
+    .atomic = TRUE,
+    .slider_error_call = .slider_error_call
   )
 }
 
@@ -357,16 +359,14 @@ slide_period2_impl <- function(.x,
                                .complete,
                                .ptype,
                                .constrain,
-                               .atomic) {
-  vec_assert(.x)
-  vec_assert(.y)
+                               .atomic,
+                               .slider_error_call = caller_env()) {
+  vec_assert(.x, call = .slider_error_call)
+  vec_assert(.y, call = .slider_error_call)
 
-  # TODO - Do more efficiently internally by reusing rather than recycling
-  # https://github.com/tidyverse/purrr/blob/e4d553989e3d18692ebeeedb334b6223ae9ea294/src/map.c#L129
-  # But use `vec_size_common()` to check sizes and get `.size`
-  args <- vec_recycle_common(.x, .y)
+  args <- vec_recycle_common(.x = .x, .y = .y, .call = .slider_error_call)
 
-  .f <- as_function(.f)
+  .f <- as_function(.f, call = .slider_error_call)
 
   f_call <- expr(.f(.x, .y, ...))
 
@@ -386,6 +386,7 @@ slide_period2_impl <- function(.x,
     constrain = .constrain,
     atomic = .atomic,
     env = environment(),
-    type = type
+    type = type,
+    slider_error_call = .slider_error_call
   )
 }

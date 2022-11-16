@@ -2,10 +2,9 @@
 # type / size strict-ness
 
 test_that("size of each `.f` result must be 1", {
-  expect_error(
-    hop_index_vec(1, 1, 1, 1, ~c(.x, 1)),
-    "In iteration 1, the result of `.f` had size 2, not 1"
-  )
+  expect_snapshot({
+    (expect_error(hop_index_vec(1, 1, 1, 1, ~c(.x, 1))))
+  })
 })
 
 test_that("inner type is allowed to be different", {
@@ -16,10 +15,12 @@ test_that("inner type is allowed to be different", {
 })
 
 test_that("inner type can be restricted with list_of", {
-  expect_error(
-    hop_index_vec(1:2, 1:2, 1:2, 1:2, ~if (.x == 1L) {list_of(1)} else {list_of("hi")}, .ptype = list_of(.ptype = double())),
-    class = "vctrs_error_incompatible_type"
-  )
+  expect_snapshot({
+    (expect_error(
+      hop_index_vec(1:2, 1:2, 1:2, 1:2, ~if (.x == 1L) {list_of(1)} else {list_of("hi")}, .ptype = list_of(.ptype = double())),
+      class = "vctrs_error_incompatible_type"
+    ))
+  })
 })
 
 # ------------------------------------------------------------------------------
@@ -39,21 +40,19 @@ test_that("`.ptype = NULL` results in 'guessed' .ptype", {
 })
 
 test_that("`.ptype = NULL` fails if no common type is found", {
-  expect_error(
-    hop_index_vec(1:2, 1:2, 1:2, 1:2, ~ifelse(.x == 1L, "hello", 1), .ptype = NULL),
-    class = "vctrs_error_incompatible_type"
-  )
+  expect_snapshot({
+    (expect_error(
+      hop_index_vec(1:2, 1:2, 1:2, 1:2, ~ifelse(.x == 1L, "hello", 1), .ptype = NULL),
+      class = "vctrs_error_incompatible_type"
+    ))
+  })
 })
 
 test_that("`.ptype = NULL` validates that element lengths are 1", {
-  expect_error(
-    hop_index_vec(1:2, 1:2, 1:2, 1:2, ~if(.x == 1L) {1:2} else {1}, .ptype = NULL),
-    "In iteration 1, the result of `.f` had size 2, not 1."
-  )
-  expect_error(
-    hop_index_vec(1:2, 1:2, 1:2, 1:2, ~if(.x == 1L) {NULL} else {2}, .ptype = NULL),
-    "In iteration 1, the result of `.f` had size 0, not 1."
-  )
+  expect_snapshot({
+    (expect_error(hop_index_vec(1:2, 1:2, 1:2, 1:2, ~if(.x == 1L) {1:2} else {1}, .ptype = NULL)))
+    (expect_error(hop_index_vec(1:2, 1:2, 1:2, 1:2, ~if(.x == 1L) {NULL} else {2}, .ptype = NULL)))
+  })
 })
 
 test_that("size 0 `.starts` / `.stops` returns size 0 `.ptype`", {
@@ -80,10 +79,12 @@ test_that("`.ptype = NULL` returns `NULL` with one size 0 and one size 1 starts 
 })
 
 test_that("`.ptype = NULL` errors with non recyclable starts/stops", {
-  expect_error(
-    hop_index_vec(integer(), integer(), integer(), 1:2, ~.x, .ptype = NULL),
-    class = "vctrs_error_incompatible_size"
-  )
+  expect_snapshot({
+    (expect_error(
+      hop_index_vec(integer(), integer(), integer(), 1:2, ~.x, .ptype = NULL),
+      class = "vctrs_error_incompatible_size"
+    ))
+  })
 })
 
 test_that(".ptypes with a vec_proxy() are restored to original type", {
