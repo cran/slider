@@ -112,7 +112,8 @@ to avoid invalid dates at the end of the month.
 }
 
 The ranges that result from applying \code{.before} and \code{.after} have the same
-3 restrictions as \code{.i} itself.}
+3 restrictions as \code{.i} itself, and are cast to the type of \code{.i} using
+\code{\link[vctrs:vec_cast]{vctrs::vec_cast()}}.}
 
 \item{.complete}{\verb{[logical(1)]}
 
@@ -155,7 +156,7 @@ in a final data frame. Hence \code{vec_cbind()} allows the more
 permissive minimal names repair.}
 
 \item{.size}{If, \code{NULL}, the default, will determine the number of rows in
-\code{vec_cbind()} output by using the tidyverse \link[vctrs:vector_recycling_rules]{recycling rules}.
+\code{vec_cbind()} output by using the tidyverse \link[vctrs:theory-faq-recycling]{recycling rules}.
 
 Alternatively, specify the desired number of rows, and any inputs of length
 1 will be recycled appropriately.}
