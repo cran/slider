@@ -91,6 +91,7 @@ company %>%
   )
 
 ## ----error=TRUE---------------------------------------------------------------
+try({
 company %>%
   mutate(
     log_sales = log10(sales),
@@ -101,4 +102,5 @@ company %>%
       .complete = TRUE
     )
   )
+})
 

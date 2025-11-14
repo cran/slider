@@ -439,7 +439,7 @@ test_that("slide() is a rowwise iterator", {
 
 test_that("slide() doesn't require `size = 1`", {
   expect_equal(
-    slide(1:2, ~c(.x, 1)),
+    slide(1:2, ~ c(.x, 1)),
     list(
       c(1L, 1L),
       c(2L, 1L)
@@ -449,7 +449,14 @@ test_that("slide() doesn't require `size = 1`", {
 
 test_that("`slide()` doesn't require a common inner type", {
   expect_equal(
-    slide(1:2, ~if (.x == 1L) {1} else {"hi"}),
+    slide(
+      1:2,
+      ~ if (.x == 1L) {
+        1
+      } else {
+        "hi"
+      }
+    ),
     list(1, "hi")
   )
 })
@@ -484,17 +491,17 @@ test_that("names are retained on inner sliced object", {
   names <- letters[1:5]
   x <- set_names(1:5, names)
   exp <- set_names(as.list(names), names)
-  expect_equal(slide(x, ~names(.x)), exp)
+  expect_equal(slide(x, ~ names(.x)), exp)
 
   names <- letters[1:5]
   x <- data.frame(x = 1:5, row.names = names)
   expect <- set_names(as.list(names), names)
-  expect_equal(slide(x, ~rownames(.x)), expect)
+  expect_equal(slide(x, ~ rownames(.x)), expect)
 
   names <- c("r1", "r2")
   x <- array(1:4, c(2, 2), dimnames = list(names, c("c1", "c2")))
   exp <- set_names(as.list(names), names)
-  expect_equal(slide(x, ~rownames(.x)), exp)
+  expect_equal(slide(x, ~ rownames(.x)), exp)
 })
 
 # ------------------------------------------------------------------------------
@@ -503,14 +510,20 @@ test_that("names are retained on inner sliced object", {
 test_that("cannot use invalid .before", {
   expect_snapshot(error = TRUE, slide(1, identity, .before = c(1, 2)))
   expect_snapshot({
-    (expect_error(slide(1, identity, .before = "x"), class = "vctrs_error_incompatible_type"))
+    (expect_error(
+      slide(1, identity, .before = "x"),
+      class = "vctrs_error_incompatible_type"
+    ))
   })
 })
 
 test_that("cannot use invalid .after", {
   expect_snapshot(error = TRUE, slide(1, identity, .after = c(1, 2)))
   expect_snapshot({
-    (expect_error(slide(1, identity, .after = "x"), class = "vctrs_error_incompatible_type"))
+    (expect_error(
+      slide(1, identity, .after = "x"),
+      class = "vctrs_error_incompatible_type"
+    ))
   })
 })
 
@@ -520,14 +533,20 @@ test_that("cannot use invalid .step", {
 
   expect_snapshot(error = TRUE, slide(1, identity, .step = c(1, 2)))
   expect_snapshot({
-    (expect_error(slide(1, identity, .step = "x"), class = "vctrs_error_incompatible_type"))
+    (expect_error(
+      slide(1, identity, .step = "x"),
+      class = "vctrs_error_incompatible_type"
+    ))
   })
 })
 
 test_that("cannot use invalid .complete", {
   expect_snapshot(error = TRUE, slide(1, identity, .complete = c(TRUE, TRUE)))
   expect_snapshot({
-    (expect_error(slide(1, identity, .complete = "hi"), class = "vctrs_error_incompatible_type"))
+    (expect_error(
+      slide(1, identity, .complete = "hi"),
+      class = "vctrs_error_incompatible_type"
+    ))
   })
 })
 
@@ -542,16 +561,18 @@ test_that("slide() forces arguments in the same way as base R / map()", {
   expect_equal(f_slide[[2]](0), f_base[[2]](0))
 })
 
-test_that(paste0(
-            "proof that the `window_stop < window_start` check is required for ",
-            "cases where the window is completely OOB"
-          ), {
-
-  expect_equal(
-    slide(1:3, identity, .before = 4, .after = -4),
-    list(integer(), integer(), integer())
-  )
-})
+test_that(
+  paste0(
+    "proof that the `window_stop < window_start` check is required for ",
+    "cases where the window is completely OOB"
+  ),
+  {
+    expect_equal(
+      slide(1:3, identity, .before = 4, .after = -4),
+      list(integer(), integer(), integer())
+    )
+  }
+)
 
 test_that("`error_call` and `.error_call` args aren't swallowed", {
   fn <- function(x, error_call) {

@@ -47,5 +47,15 @@ test_that("empty input returns a list, but after the index size check", {
 })
 
 test_that("empty input works with `.complete = TRUE` (#111)", {
-  expect_equal(slide_period2(integer(), integer(), new_date(), "year", ~.x, .complete = TRUE), list())
+  expect_equal(
+    slide_period2(
+      integer(),
+      integer(),
+      new_date(),
+      "year",
+      ~.x,
+      .complete = TRUE
+    ),
+    list()
+  )
 })
